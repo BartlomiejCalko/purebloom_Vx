@@ -1,0 +1,27 @@
+import { AnimatedScreen } from "@/components/AnimatedScreen";
+import { ImageBackground, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function HomeScreen() {
+    return (
+        <AnimatedScreen>
+            <ImageBackground
+                source={require("@/assets/images/Mystical Night Scene.jpg")}
+                style={{ flex: 1 }}
+                resizeMode="cover"
+            >
+                <SafeAreaView className="flex-1 items-center px-5">
+                    <View className="flex flex-row justify-between items-center bg-transparent w-[100%] h-[10vh] rounded-3xl py-2">
+                        <View className="flex bg-gray-200/50 w-[13vh] h-[6vh] rounded-full justify-center p-3">
+                            <Text className="text-sm font-bold text-black">Chat AI</Text>
+                        </View>
+                        <Text className="text-xl font-semibold text-white">Witaj Bartek</Text>
+                    </View>
+                    <View className="flex flex-col items-center justify-center h-[20vh] bg-white/60 w-[100%] rounded-3xl">
+                        <Text className="text-2xl font-bold text-white">Witaj Bartek</Text>
+                    </View>
+                </SafeAreaView>
+            </ImageBackground>
+        </AnimatedScreen>
+    );
+}
