@@ -1,7 +1,8 @@
 import { AnimatedScreen } from "@/components/AnimatedScreen";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Dimensions, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, Image, ImageSourcePropType, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Animated, { interpolateColor, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,6 +17,7 @@ interface Exercise {
     title: string;
     duration?: string;
     progress?: number; // 0 to 1
+    image?: ImageSourcePropType;
 }
 
 interface Category {
@@ -37,7 +39,12 @@ const CATEGORIES: Category[] = [
         color: "#3B82F6", // Blue
         icon: "construct-outline",
         exercises: [
-            { id: "t1", title: "Terapeutyczne Zapisywanie Myśli", progress: 0.3 },
+            {
+                id: "t1",
+                title: "Terapeutyczne Zapisywanie Myśli",
+                progress: 0.3,
+                image: require("@/assets/images/Mystical Night Scene.jpg")
+            },
             { id: "t2", title: "Etykietowanie Emocji" },
             { id: "t3", title: "Oddzielenie od Myśli (Defuzja)" },
             { id: "t4", title: "Rozjaśnianie Wartości" },
@@ -113,7 +120,6 @@ const CategoryTab = ({
     onPress: () => void
 }) => {
     // Derived value for animation progress (0 -> 1)
-    // We use withTiming directly here. When isActive changes, re-render triggers this hook updates.
     const progress = useDerivedValue(() => {
         return withTiming(isActive ? 1 : 0, { duration: 300 });
     }, [isActive]);
@@ -128,25 +134,8 @@ const CategoryTab = ({
             backgroundColor: interpolateColor(
                 progress.value,
                 [0, 1],
-                ["transparent", `${category.color}10`] // hex with low alpha
+                ["transparent", `${category.color}10`]
             ),
-        };
-    });
-
-    const animatedIconStyle = useAnimatedStyle(() => {
-        // Since we can't easily animate icon props directly with reanimated in basic setup without createAnimatedComponent,
-        // we can wrap it or just use color interpolation if we wrap Ionicons.
-        // Simplified approach: Render icon and let useDerivedValue handle opacity overlay? 
-        // Better: render standard icon and let React handle color, 
-        // layout animation handles the rest. 
-        // BUT strict requirement was "smooth transition".
-        // Let's rely on React state update for icon color which is usually fast enough, 
-        // BUT the border/bg is the main visual weight.
-        // Actually, we can just use color interpolation if we can style the icon.
-
-        return {
-            // This won't work on Ionicons directly without Animated wrapper.
-            // Let's stick to the high-impact bg/border animation.
         };
     });
 
@@ -165,13 +154,13 @@ const CategoryTab = ({
         >
             {/* Icon Card */}
             <Animated.View
-                className={`w-[85px] h-[65px] items-center justify-center rounded-2xl border-2 mb-2`}
+                className="w-[85px] h-[65px] items-center justify-center rounded-2xl border-2 mb-2"
                 style={animatedCardStyle}
             >
                 <Ionicons
                     name={category.icon}
                     size={28}
-                    color={isActive ? category.color : "#9CA3AF"} // React state update for icon color
+                    color={isActive ? category.color : "#9CA3AF"}
                 />
             </Animated.View>
 
@@ -190,6 +179,7 @@ const CategoryTab = ({
 };
 
 export default function PracticeScreen() {
+    const router = useRouter();
     const [selectedCategory, setSelectedCategory] = useState<CategoryId>("mindfulness");
     const [isChanging, setIsChanging] = useState(false);
 
@@ -277,14 +267,27 @@ export default function PracticeScreen() {
                                 <TouchableOpacity
                                     key={exercise.id}
                                     activeOpacity={0.9}
+                                    onPress={() => {
+                                        if (exercise.id === 't1') {
+                                            router.push('/practice/thought-recording');
+                                        }
+                                    }}
                                     className="bg-white border border-gray-200 rounded-[24px] p-5 flex-row items-center shadow-sm shadow-gray-100"
                                 >
                                     {/* Icon Box */}
                                     <View
-                                        className="w-14 h-14 rounded-2xl items-center justify-center mr-4"
-                                        style={{ backgroundColor: `${currentCategory.color}15` }} // 10% opacity hex
+                                        className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
+                                        style={{ backgroundColor: `${currentCategory.color}15` }}
                                     >
-                                        <Ionicons name="play-circle" size={28} color={currentCategory.color} />
+                                        {exercise.image ? (
+                                            <Image
+                                                source={exercise.image}
+                                                className="w-full h-full"
+                                                resizeMode="cover"
+                                            />
+                                        ) : (
+                                            <Ionicons name="play-circle" size={28} color={currentCategory.color} />
+                                        )}
                                     </View>
 
                                     {/* Text Info */}
