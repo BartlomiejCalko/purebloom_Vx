@@ -1,8 +1,8 @@
 import { AnimatedScreen } from "@/components/AnimatedScreen";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Dimensions, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { Dimensions, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import Animated, { interpolateColor, useAnimatedStyle, useDerivedValue, useSharedValue, withTiming } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
@@ -29,11 +29,10 @@ interface Category {
 }
 
 const CATEGORIES: Category[] = [
-    
     {
         id: "tools",
-        label: "Narzędz",
-        headerTitle: "Narzędzia Terapeutycz",
+        label: "Narzędzia",
+        headerTitle: "Narzędzia Terapeutyczne",
         description: "Strukturalne ćwiczenia regulujące emocje i wspierające wgląd.",
         color: "#3B82F6", // Blue
         icon: "construct-outline",
@@ -58,7 +57,6 @@ const CATEGORIES: Category[] = [
             { id: "m4", title: "Skan Ciała – Relaks" },
         ],
     },
-    
     {
         id: "cbt",
         label: "CBT",
@@ -103,10 +101,99 @@ const CATEGORIES: Category[] = [
     },
 ];
 
+// --- Components ---
+
+const CategoryTab = ({
+    category,
+    isActive,
+    onPress
+}: {
+    category: Category;
+    isActive: boolean;
+    onPress: () => void
+}) => {
+    // Derived value for animation progress (0 -> 1)
+    // We use withTiming directly here. When isActive changes, re-render triggers this hook updates.
+    const progress = useDerivedValue(() => {
+        return withTiming(isActive ? 1 : 0, { duration: 300 });
+    }, [isActive]);
+
+    const animatedCardStyle = useAnimatedStyle(() => {
+        return {
+            borderColor: interpolateColor(
+                progress.value,
+                [0, 1],
+                ["#F3F4F6", category.color]
+            ),
+            backgroundColor: interpolateColor(
+                progress.value,
+                [0, 1],
+                ["transparent", `${category.color}10`] // hex with low alpha
+            ),
+        };
+    });
+
+    const animatedIconStyle = useAnimatedStyle(() => {
+        // Since we can't easily animate icon props directly with reanimated in basic setup without createAnimatedComponent,
+        // we can wrap it or just use color interpolation if we wrap Ionicons.
+        // Simplified approach: Render icon and let useDerivedValue handle opacity overlay? 
+        // Better: render standard icon and let React handle color, 
+        // layout animation handles the rest. 
+        // BUT strict requirement was "smooth transition".
+        // Let's rely on React state update for icon color which is usually fast enough, 
+        // BUT the border/bg is the main visual weight.
+        // Actually, we can just use color interpolation if we can style the icon.
+
+        return {
+            // This won't work on Ionicons directly without Animated wrapper.
+            // Let's stick to the high-impact bg/border animation.
+        };
+    });
+
+    const animatedIndicatorStyle = useAnimatedStyle(() => {
+        return {
+            width: `${progress.value * 80}%`,
+            backgroundColor: category.color,
+            opacity: progress.value
+        };
+    });
+
+    return (
+        <Pressable
+            onPress={onPress}
+            className="items-center mr-1"
+        >
+            {/* Icon Card */}
+            <Animated.View
+                className={`w-[85px] h-[65px] items-center justify-center rounded-2xl border-2 mb-2`}
+                style={animatedCardStyle}
+            >
+                <Ionicons
+                    name={category.icon}
+                    size={28}
+                    color={isActive ? category.color : "#9CA3AF"} // React state update for icon color
+                />
+            </Animated.View>
+
+            {/* Label */}
+            <Text className={`text-xs font-bold mb-1 ${isActive ? "text-black" : "text-gray-500"}`}>
+                {category.label}
+            </Text>
+
+            {/* Active Indicator Line */}
+            <Animated.View
+                className="h-[3px] rounded-full"
+                style={animatedIndicatorStyle}
+            />
+        </Pressable>
+    );
+};
+
 export default function PracticeScreen() {
     const [selectedCategory, setSelectedCategory] = useState<CategoryId>("mindfulness");
     const [isChanging, setIsChanging] = useState(false);
 
+    // Initial load: ensure selectedCategory exists or fallback
     const currentCategory = CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
     const opacity = useSharedValue(1);
     const translateY = useSharedValue(0);
@@ -116,33 +203,28 @@ export default function PracticeScreen() {
 
         setIsChanging(true);
 
-        // Animate out
+        // Animate content out
         opacity.value = withTiming(0, { duration: 150 });
-        translateY.value = withTiming(20, { duration: 150 }, () => {
-            // Trigger state update after fade out
-            // In Reanimated usually we'd use runOnJS but for simple layout switching simple timeout/effect combo works or runOnJS
-        });
+        translateY.value = withTiming(20, { duration: 150 });
 
-        // Use a small timeout to allow animation to complete visually before state swap
-        // This is a simplified approach for smooth React updates
+        // Update state after content fades out
         setTimeout(() => {
             setSelectedCategory(id);
-            translateY.value = 20; // Reset position for entry
+            translateY.value = 20; // Ensure mapped to start pos
             opacity.value = withTiming(1, { duration: 500 });
             translateY.value = withTiming(0, { duration: 600 });
             setIsChanging(false);
         }, 150);
     };
 
-
-    const animatedStyle = useAnimatedStyle(() => ({
+    const animatedContentStyle = useAnimatedStyle(() => ({
         opacity: opacity.value,
         transform: [{ translateY: translateY.value }]
     }));
 
     return (
         <AnimatedScreen className="bg-white flex-1">
-            <SafeAreaView edges={['top']} className="flex-1 bg-white">
+            <SafeAreaView edges={['top']} className="flex-1 bg-white pt-4">
 
                 {/* Horizontal Category Tabs */}
                 <View className="pt-2 pb-4">
@@ -151,33 +233,14 @@ export default function PracticeScreen() {
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
                     >
-                        {CATEGORIES.map((cat) => {
-                            const isActive = selectedCategory === cat.id;
-                            return (
-                                <TouchableOpacity
-                                    key={cat.id}
-                                    onPress={() => handleCategoryPress(cat.id)}
-                                    activeOpacity={0.7}
-                                    className={`items-center justify-center px-4 py-3 rounded-2xl border-2 min-w-[90px] ${isActive ? "bg-white" : "bg-white border-gray-100"
-                                        }`}
-                                    style={{
-                                        borderColor: isActive ? cat.color : "#F3F4F6", // border-gray-100 equivalent
-                                        borderBottomWidth: isActive ? 4 : 2,
-                                    }}
-                                >
-                                    {/* Simplified Icon */}
-                                    <Ionicons
-                                        name={cat.icon}
-                                        size={24}
-                                        color={isActive ? cat.color : "#9CA3AF"} // gray-400
-                                        style={{ marginBottom: 4 }}
-                                    />
-                                    <Text className={`text-xs font-semibold ${isActive ? "text-black" : "text-gray-400"}`}>
-                                        {cat.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
+                        {CATEGORIES.map((cat) => (
+                            <CategoryTab
+                                key={cat.id}
+                                category={cat}
+                                isActive={selectedCategory === cat.id}
+                                onPress={() => handleCategoryPress(cat.id)}
+                            />
+                        ))}
                     </ScrollView>
                 </View>
 
@@ -185,8 +248,11 @@ export default function PracticeScreen() {
                 <View className="h-[1px] bg-gray-100 mx-5 mb-4" />
 
                 {/* Scrollable Content */}
-                <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-                    <Animated.View style={[animatedStyle, { paddingHorizontal: 20 }]}>
+                <ScrollView contentContainerStyle={{
+                    paddingBottom: 100,
+                    paddingTop: 20
+                }}>
+                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]}>
 
                         {/* Dynamic Header */}
                         <View className="flex-row items-center justify-between mb-8">
@@ -201,7 +267,7 @@ export default function PracticeScreen() {
 
                             {/* Large Icon Placeholder */}
                             <View className="w-20 h-20 rounded-full items-center justify-center bg-gray-50">
-                                <Ionicons name={currentCategory.icon} size={48} color={currentCategory.color} />
+                                <Ionicons name={currentCategory.icon} size={60} color={currentCategory.color} />
                             </View>
                         </View>
 
