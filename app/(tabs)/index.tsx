@@ -17,7 +17,9 @@ export default function HomeScreen() {
                         </View>
                         <Text className="text-xl font-semibold text-white">Witaj Bartek</Text>
                     </View>
-                    
+                    <View className="flex flex-row justify-between items-center bg-transparent w-[100%] h-[40vh] rounded-3xl py-2 bg-blue-500/50 border border-white/50 mt-20">
+                        
+                    </View>                
                 </SafeAreaView>
             </ImageBackground>
         </AnimatedScreen>
