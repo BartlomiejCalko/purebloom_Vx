@@ -26,8 +26,9 @@ interface Category {
     headerTitle: string;
     description: string;
     color: string;
-    icon: keyof typeof Ionicons.glyphMap;
+    icon?: keyof typeof Ionicons.glyphMap;
     exercises: Exercise[];
+    image?: ImageSourcePropType;
 }
 
 const CATEGORIES: Category[] = [
@@ -37,7 +38,9 @@ const CATEGORIES: Category[] = [
         headerTitle: "Narzędzia Terapeutyczne",
         description: "Strukturalne ćwiczenia regulujące emocje i wspierające wgląd.",
         color: "#3B82F6", // Blue
-        icon: "construct-outline",
+        //color: "#030303ff", // Amber
+        icon: "grid-outline",
+        image: require("@/assets/images/narzedzia.png"),
         exercises: [
             {
                 id: "t1",
@@ -56,6 +59,7 @@ const CATEGORIES: Category[] = [
         headerTitle: "Uważność",
         description: "Krótkie prowadzone medytacje, które pomagają się wyciszyć.",
         color: "#8B5CF6", // Violet
+        image: require("@/assets/images/uwaznosc.png"),
         icon: "flower-outline",
         exercises: [
             { id: "m1", title: "Medytacja Prowadzona", duration: "5 min" },
@@ -71,6 +75,7 @@ const CATEGORIES: Category[] = [
         description: "Sprawdzone metody rozpoznawania i zmiany schematów myślowych.",
         color: "#F59E0B", // Amber
         icon: "analytics-outline",
+        image: require("@/assets/images/cbt2.png"),
         exercises: [
             { id: "c1", title: "Dziennik Myśli" },
             { id: "c2", title: "Restrukturyzacja Poznawcza" },
@@ -154,14 +159,18 @@ const CategoryTab = ({
         >
             {/* Icon Card */}
             <Animated.View
-                className="w-[85px] h-[65px] items-center justify-center rounded-2xl border-2 mb-2"
+                className="w-[85px] h-[75px] items-center justify-center rounded-2xl border-2 mb-2 overflow-hidden bg-blue-50"
                 style={animatedCardStyle}
             >
-                <Ionicons
+                <Image
+                    source={category.image}
+                    className="w-[45px] h-[40px] object-contain"
+                />
+                {/* <Ionicons
                     name={category.icon}
                     size={28}
                     color={isActive ? category.color : "#9CA3AF"}
-                />
+                />  */}
             </Animated.View>
 
             {/* Label */}
@@ -217,7 +226,7 @@ export default function PracticeScreen() {
             <SafeAreaView edges={['top']} className="flex-1 bg-white pt-4">
 
                 {/* Horizontal Category Tabs */}
-                <View className="pt-2 pb-4">
+                <View className="pt-2 pb-2">
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -234,15 +243,15 @@ export default function PracticeScreen() {
                     </ScrollView>
                 </View>
 
-                {/* Separator Line */}
-                <View className="h-[1px] bg-gray-100 mx-5 mb-4" />
+                {/* Separator Line 
+                <View className="h-[1px] bg-gray-100 mx-5 mb-4" />*/}
 
                 {/* Scrollable Content */}
                 <ScrollView contentContainerStyle={{
                     paddingBottom: 100,
-                    paddingTop: 20
+                    paddingTop: 10
                 }}>
-                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]}>
+                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]} className="pt-4 pb-4">
 
                         {/* Dynamic Header */}
                         <View className="flex-row items-center justify-between mb-8">
@@ -256,8 +265,12 @@ export default function PracticeScreen() {
                             </View>
 
                             {/* Large Icon Placeholder */}
-                            <View className="w-20 h-20 rounded-full items-center justify-center bg-gray-50">
-                                <Ionicons name={currentCategory.icon} size={60} color={currentCategory.color} />
+                            <View className="w-20 h-20 rounded-full items-center justify-center">
+                                {/*<Ionicons name={currentCategory.icon} size={60} color={currentCategory.color} />*/}
+                                <Image
+                                    source={currentCategory.image}
+                                    className="w-full h-full object-contain"
+                                />
                             </View>
                         </View>
 
