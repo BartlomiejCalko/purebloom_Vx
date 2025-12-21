@@ -134,7 +134,7 @@ const CategoryTab = ({
             borderColor: interpolateColor(
                 progress.value,
                 [0, 1],
-                ["#F3F4F6", category.color]
+                ["#ebebebc4", category.color]
             ),
             backgroundColor: interpolateColor(
                 progress.value,
@@ -159,7 +159,7 @@ const CategoryTab = ({
         >
             {/* Icon Card */}
             <Animated.View
-                className="w-[85px] h-[75px] items-center justify-center rounded-2xl border-2 mb-2 overflow-hidden bg-blue-50"
+                className="w-[85px] h-[75px] items-center justify-center rounded-2xl border-2 mb-2 overflow-hidden"
                 style={animatedCardStyle}
             >
                 <Image
@@ -226,7 +226,7 @@ export default function PracticeScreen() {
             <SafeAreaView edges={['top']} className="flex-1 bg-white pt-4">
 
                 {/* Horizontal Category Tabs */}
-                <View className="pt-2 pb-2">
+                <View className="pt-4 pb-4 bg-white">
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -251,7 +251,7 @@ export default function PracticeScreen() {
                     paddingBottom: 100,
                     paddingTop: 10
                 }}>
-                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]} className="pt-4 pb-4">
+                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]} className="pt-4 pb-4 bg-white">
 
                         {/* Dynamic Header */}
                         <View className="flex-row items-center justify-between mb-8">
@@ -259,7 +259,7 @@ export default function PracticeScreen() {
                                 <Text className="text-2xl font-bold text-black mb-2 leading-tight">
                                     {currentCategory.headerTitle}
                                 </Text>
-                                <Text className="text-base text-gray-500 leading-relaxed">
+                                <Text className="text-base text-gray-400 leading-relaxed">
                                     {currentCategory.description}
                                 </Text>
                             </View>
