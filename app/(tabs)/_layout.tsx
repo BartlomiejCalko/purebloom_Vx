@@ -10,16 +10,16 @@ export default function TabLayout() {
             screenOptions={{
                 headerShown: false,
                 tabBarStyle: {
-                    backgroundColor: "#f5f5f5", // Light gray background
+                    position: "absolute", // Makes it overlay on top of content
+                    backgroundColor: "transparent",
                     borderTopWidth: 0,
                     elevation: 0,
                     height: Platform.OS === "ios" ? 90 : 60,
                     paddingBottom: Platform.OS === "ios" ? 30 : 10,
                     paddingTop: 10,
-                    
                 },
-                tabBarActiveTintColor: "#000000", // Black active color
-                tabBarInactiveTintColor: "#888888", // Gray inactive color
+                tabBarActiveTintColor: "rgba(217, 150, 251, 0.5)", // Adjusted for darker backgrounds
+                tabBarInactiveTintColor: "rgba(140, 85, 222, 0.5)",
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: "600",
