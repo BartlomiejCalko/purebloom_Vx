@@ -72,7 +72,7 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         // Heaviness: Y-axis gravity (ODWRÓCONE)
         // h=0 (Lewo/Ciężar) -> Down (positive Y) = opadanie
         // h=1 (Prawo/Lekkość) -> Up (negative Y) = unoszenie się
-        const gravity = (0.5 - h) * 600; // 👈 ZMIEŃ TĘ WARTOŚĆ (80-150) aby kontrolować siłę grawitacji
+        const gravity = (0.65 - h) * 800; // 👈 ZMIEŃ TĘ WARTOŚĆ (80-150) aby kontrolować siłę grawitacji
 
         // Energy: Z-axis speed
         // e=0 -> Very slow drift
