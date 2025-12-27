@@ -58,8 +58,8 @@ export const EmotionalBlob: React.FC<EmotionalBlobProps> = ({
     isTouched,
     mode = 'passive',
 }) => {
-    const { width } = useWindowDimensions();
-    const height = 400;
+    const { width, height } = useWindowDimensions();
+    // const height = 400; // previously hardcoded
     const cx = width / 2;
     const cy = height / 2;
 

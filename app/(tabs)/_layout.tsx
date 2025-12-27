@@ -11,15 +11,15 @@ export default function TabLayout() {
                 headerShown: false,
                 tabBarStyle: {
                     position: "absolute", // Makes it overlay on top of content
-                    backgroundColor: "transparent",
+                    backgroundColor: "rgba(0, 0, 0, 0.95)",
                     borderTopWidth: 0,
                     elevation: 0,
                     height: Platform.OS === "ios" ? 90 : 60,
                     paddingBottom: Platform.OS === "ios" ? 30 : 10,
                     paddingTop: 10,
                 },
-                tabBarActiveTintColor: "rgba(217, 150, 251, 0.5)", // Adjusted for darker backgrounds
-                tabBarInactiveTintColor: "rgba(140, 85, 222, 0.5)",
+                tabBarActiveTintColor: "rgba(229, 181, 253, 0.9)", // Adjusted for darker backgrounds
+                tabBarInactiveTintColor: "rgba(140, 85, 222, 0.75)",
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: "600",

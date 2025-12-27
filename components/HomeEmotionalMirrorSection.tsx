@@ -37,14 +37,14 @@ export const HomeEmotionalMirrorSection = () => {
 
     return (
         <View
-            className="w-full flex items-center justify-center pt-8"
-            style={{ height: "60%" }}
+            className="w-full flex items-center justify-start"
+            style={{ height: "45%" }}
         >
             <Pressable
                 onPress={handlePress}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
-                className="flex-1 w-full items-center justify-center"
+                className="flex-1 w-full items-center justify-center bg-slate-950"
                 style={{ overflow: 'visible' }}
             >
                 <EmotionalBlob
