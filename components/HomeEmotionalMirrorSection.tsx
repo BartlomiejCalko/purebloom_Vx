@@ -31,10 +31,7 @@ export const HomeEmotionalMirrorSection = () => {
     };
 
     return (
-        <View
-            className="w-full relative items-center justify-center"
-            style={{ height: "45%" }}
-        >
+        <View className="w-full relative items-center justify-center flex-1">
             <Pressable
                 onPress={handlePress}
                 className="flex-1 w-full bg-slate-900"
