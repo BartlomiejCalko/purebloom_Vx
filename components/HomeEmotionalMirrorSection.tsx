@@ -3,33 +3,28 @@ import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useSharedValue, withTiming } from "react-native-reanimated";
-import { EmotionalBlob } from "./EmotionalBlob";
+import { EmotionalParticles } from "./EmotionalParticles";
 
 export const HomeEmotionalMirrorSection = () => {
     const router = useRouter();
     // Read persisted global state
     const { state } = useEmotionalState();
 
-    const isTouched = useSharedValue(0);
     // Local shared values that mirror the global state for the Blob
     const intensity = useSharedValue(state.intensity);
+    const valence = useSharedValue(state.valence);
+    const heaviness = useSharedValue(state.heaviness);
+    const stability = useSharedValue(state.stability);
     const energy = useSharedValue(state.energy);
-    const tension = useSharedValue(state.tension);
 
     // Sync shared values when global state updates (e.g. returning from Mirror)
     useEffect(() => {
-        intensity.value = withTiming(state.intensity, { duration: 1500 }); // Smooth transition back to new state
+        intensity.value = withTiming(state.intensity, { duration: 1500 });
+        valence.value = withTiming(state.valence, { duration: 1500 });
+        heaviness.value = withTiming(state.heaviness, { duration: 1500 });
+        stability.value = withTiming(state.stability, { duration: 1500 });
         energy.value = withTiming(state.energy, { duration: 1500 });
-        tension.value = withTiming(state.tension, { duration: 1500 });
-    }, [state.intensity, state.energy, state.tension]);
-
-    const handlePressIn = () => {
-        isTouched.value = withTiming(1, { duration: 600 });
-    };
-
-    const handlePressOut = () => {
-        isTouched.value = withTiming(0, { duration: 600 });
-    };
+    }, [state]);
 
     const handlePress = () => {
         router.push("/emotional-mirror");
@@ -37,29 +32,28 @@ export const HomeEmotionalMirrorSection = () => {
 
     return (
         <View
-            className="w-full flex items-center justify-start"
+            className="w-full relative items-center justify-center"
             style={{ height: "45%" }}
         >
             <Pressable
                 onPress={handlePress}
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
-                className="flex-1 w-full items-center justify-center bg-slate-950"
+                className="flex-1 w-full bg-slate-900"
                 style={{ overflow: 'visible' }}
             >
-                <EmotionalBlob
+                <EmotionalParticles
                     intensity={intensity}
+                    valence={valence}
+                    heaviness={heaviness}
+                    stability={stability}
                     energy={energy}
-                    tension={tension}
-                    isTouched={isTouched}
-                    mode="passive" // Explicitly passive mode for Home
+                    mode="passive"
                 />
             </Pressable>
 
             {/* Micro-invitation text */}
-            <View className="absolute bottom-4 opacity-60">
-                <Text className="text-white/70 text-sm font-light tracking-widest text-center">
-                    Dotknij, żeby sprawdzić swój stan
+            <View className="opacity-60 absolute" style={{ marginBottom: -280 }}>
+                <Text className="text-white/70 text-md font-light tracking-tighter text-center">
+                    Twoje emocje są widoczne
                 </Text>
             </View>
         </View>

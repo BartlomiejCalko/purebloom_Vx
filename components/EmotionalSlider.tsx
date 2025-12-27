@@ -10,6 +10,8 @@ import Animated, {
 
 interface EmotionalSliderProps {
     label: string;
+    leftLabel?: string;
+    rightLabel?: string;
     value: SharedValue<number>; // 0 to 1
     onChange?: (val: number) => void;
     onComplete?: () => void; // Called when user releases interaction
@@ -17,6 +19,8 @@ interface EmotionalSliderProps {
 
 export const EmotionalSlider: React.FC<EmotionalSliderProps> = ({
     label,
+    leftLabel,
+    rightLabel,
     value,
     onChange,
     onComplete,
@@ -83,6 +87,11 @@ export const EmotionalSlider: React.FC<EmotionalSliderProps> = ({
                     />
                 </View>
             </GestureDetector>
+
+            <View className="flex-row justify-between mt-1 px-1">
+                <Text className="text-white/40 text-xs">{leftLabel}</Text>
+                <Text className="text-white/40 text-xs">{rightLabel}</Text>
+            </View>
         </View>
     );
 };
