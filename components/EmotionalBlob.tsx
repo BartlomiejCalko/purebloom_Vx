@@ -192,7 +192,7 @@ export const EmotionalBlob: React.FC<EmotionalBlobProps> = ({
     const tensionPath = useDerivedValue(() => createTensionPath(time.value, activeTension.value, activeIsTouched.value, mode));
 
     // Derived Opacities for Balance
-    const tensionOpacity = useDerivedValue(() => activeTension.value * 0.8); // 0 -> 0.8
+    const tensionOpacity = useDerivedValue(() => activeTension.value * 0.9); // 0 -> 0.8
     const flowOpacity = useDerivedValue(() => 0.4 + activeEnergy.value * 0.3); // More energy = more visible flow
 
     return (
@@ -204,7 +204,7 @@ export const EmotionalBlob: React.FC<EmotionalBlobProps> = ({
                     <RadialGradient
                         c={vec(cx, cy)}
                         r={RADIUS_BASE * 1.5}
-                        colors={["#A78BFA", "#818CF8", "#6366F1"]}
+                        colors={["#A78BFA", "#818CF8", "#2d9c71ff"]}
                         positions={[0, 0.6, 1]}
                     />
                     <Blur blur={20} />
@@ -216,7 +216,7 @@ export const EmotionalBlob: React.FC<EmotionalBlobProps> = ({
                 <RadialGradient
                     c={vec(cx - 30, cy - 30)}
                     r={RADIUS_BASE * 1.2}
-                    colors={["#E9D5FF", "#A78BFA", "#7C3AED"]} // Deep, solid core
+                    colors={["#E9D5FF", "#A78BFA", "#973391ff"]} // Deep, solid core
                     positions={[0, 0.5, 1]}
                 />
                 <Blur blur={4} />
@@ -227,15 +227,15 @@ export const EmotionalBlob: React.FC<EmotionalBlobProps> = ({
             <Group opacity={tensionOpacity}>
                 <Path
                     path={tensionPath}
-                    color="#312E81" // Dark indigo stroke
+                    color="#bb39cfff" // Dark indigo stroke
                     style="stroke"
-                    strokeWidth={3}
-                    opacity={0.6}
+                    strokeWidth={12}
+                    opacity={0.8}
                 >
                     <Blur blur={2} />
                 </Path>
                 {/* Inner jagged shadow for anxiety feel */}
-                <Path path={tensionPath} style="stroke" strokeWidth={1} color="#1E1B4B" opacity={0.4} />
+                <Path path={tensionPath} style="stroke" strokeWidth={2} color="#1E1B4B" opacity={0.8} />
             </Group>
 
             {/* 4. Touch/Interactive Highlights (Top) */}

@@ -135,7 +135,7 @@ const CategoryTab = ({
                 progress.value,
                 [0, 1],
                 ["#ebebebc4", category.color]
-            ),
+            ), 
             backgroundColor: interpolateColor(
                 progress.value,
                 [0, 1],
@@ -223,10 +223,10 @@ export default function PracticeScreen() {
 
     return (
         <AnimatedScreen className="bg-white flex-1">
-            <SafeAreaView edges={['top']} className="flex-1 bg-white pt-4">
+            <SafeAreaView edges={['top']} className="flex-1 bg-black pt-4">
 
                 {/* Horizontal Category Tabs */}
-                <View className="pt-4 pb-4 bg-white">
+                <View className="pt-4 pb-4 bg-transparent">
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -251,17 +251,17 @@ export default function PracticeScreen() {
                     paddingBottom: 100,
                     paddingTop: 10
                 }}>
-                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]} className="pt-4 pb-4 bg-white">
+                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]} className="pt-4 pb-4 bg-transparent">
 
                         {/* Dynamic Header */}
                         <View className="flex-row items-center justify-between mb-8">
                             <View className="flex-1 pr-4">
-                                <Text className="text-2xl font-bold text-black mb-2 leading-tight">
+                                <Text className="text-2xl font-bold text-white mb-2 leading-tight">
                                     {currentCategory.headerTitle}
                                 </Text>
-                                <Text className="text-base text-gray-400 leading-relaxed">
+                                {/* <Text className="text-base text-gray-400 leading-relaxed">
                                     {currentCategory.description}
-                                </Text>
+                                </Text> */}
                             </View>
 
                             {/* Large Icon Placeholder */}
@@ -285,7 +285,7 @@ export default function PracticeScreen() {
                                             router.push('/practice/thought-recording');
                                         }
                                     }}
-                                    className="bg-white border border-gray-200 rounded-[24px] p-5 flex-row items-center shadow-sm shadow-gray-100"
+                                    className="bg-indigo-950 border border-gray-200 rounded-[24px] p-5 flex-row items-center shadow-sm shadow-gray-100"
                                 >
                                     {/* Icon Box */}
                                     <View
