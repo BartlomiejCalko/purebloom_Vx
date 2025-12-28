@@ -58,37 +58,37 @@ export default function EmotionalMirrorScreen() {
                         </Text>
 
                         <EmotionalSlider
-                            label="Intensywność"
+                            label="Jak intensywne jest to, co czujesz?"
                             leftLabel="Słabe"
-                            rightLabel="Silne"
+                            rightLabel="Intensywne"
                             value={intensity}
                         />
 
                         <EmotionalSlider
-                            label="Przyjemność (Walencja)"
-                            leftLabel="Nieprzyjemne"
-                            rightLabel="Przyjemne"
+                            label="Czy to co czujesz jest przyjemne czy nieprzyjemne?"
+                            leftLabel="Przyjemne"
+                            rightLabel="Nieprzyjemne"
                             value={valence}
                         />
 
                         <EmotionalSlider
-                            label="Ciężar"
-                            leftLabel="Ciężar"
-                            rightLabel="Lekkość"
+                            label="Czy to, co czujesz daje Ci poczucie ciężaru czy lekkości?"
+                            leftLabel="Lekkość"
+                            rightLabel="Ciężar"
                             value={heaviness}
                         />
 
                         <EmotionalSlider
-                            label="Stabilność"
-                            leftLabel="Chaos"
-                            rightLabel="Stabilność"
+                            label="Jak określisz swój stan wewnętrzny?"
+                            leftLabel="Stabilny"
+                            rightLabel="Chaotyczny"
                             value={stability}
                         />
 
                         <EmotionalSlider
-                            label="Energia"
-                            leftLabel="Mało"
-                            rightLabel="Dużo"
+                            label="Jak określisz poziom Twojej energii?"
+                            leftLabel="Niski"
+                            rightLabel="Wysoki"
                             value={energy}
                         />
 

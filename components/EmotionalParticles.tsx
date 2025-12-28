@@ -188,7 +188,7 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
     });
 
     const strokeWidth = useDerivedValue(() => {
-        return 4 * (0.5 + intensity.value);
+        return 6 * (0.6 + intensity.value);
     });
 
     return (
