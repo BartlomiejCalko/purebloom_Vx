@@ -10,7 +10,7 @@ export const HomeEmotionalMirrorSection = () => {
     // Read persisted global state
     const { state } = useEmotionalState();
 
-    // Local shared values that mirror the global state for the Blob
+    // Local shared values that mirror the global state for the Particles
     const intensity = useSharedValue(state.intensity);
     const valence = useSharedValue(state.valence);
     const heaviness = useSharedValue(state.heaviness);
@@ -31,7 +31,7 @@ export const HomeEmotionalMirrorSection = () => {
     };
 
     return (
-        <View className="w-full relative items-center justify-center flex-1">
+        <View className="w-full relative items-center justify-center flex-1 rounded-xl overflow-hidden bg-slate-900">
             <Pressable
                 onPress={handlePress}
                 className="flex-1 w-full bg-slate-900"
@@ -48,7 +48,7 @@ export const HomeEmotionalMirrorSection = () => {
             </Pressable>
 
             {/* Micro-invitation text */}
-            <View className="opacity-60 absolute" style={{ marginBottom: -280 }}>
+            <View className="opacity-60 absolute" style={{ marginBottom: -100 }}>
                 <Text className="text-white/70 text-md font-light tracking-tighter text-center">
                     Twoje emocje są widoczne
                 </Text>

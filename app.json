@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "purebloom_Vx",
-    "slug": "purebloom_Vx",
+    "name": "pureBloom",
+    "slug": "pureBloom",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "purebloomvx",
+    "scheme": "purebloom",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -33,7 +33,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#FFFFFF",
           "dark": {
             "backgroundColor": "#000000"
           }

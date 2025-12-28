@@ -18,8 +18,8 @@ export default function TabLayout() {
                     paddingBottom: Platform.OS === "ios" ? 30 : 10,
                     paddingTop: 10,
                 },
-                tabBarActiveTintColor: "rgba(229, 181, 253, 0.9)", // Adjusted for darker backgrounds
-                tabBarInactiveTintColor: "rgba(140, 85, 222, 0.75)",
+                tabBarActiveTintColor: "rgba(250, 242, 254, 0.9)", // Adjusted for darker backgrounds
+                tabBarInactiveTintColor: "rgba(158, 158, 158, 0.75)",
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: "600",

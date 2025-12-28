@@ -37,8 +37,7 @@ const CATEGORIES: Category[] = [
         label: "Narzędzia",
         headerTitle: "Narzędzia Terapeutyczne",
         description: "Strukturalne ćwiczenia regulujące emocje i wspierające wgląd.",
-        color: "#3B82F6", // Blue
-        //color: "#030303ff", // Amber
+        color: "#06B6D4", // Cyan - Northern Lights Teal
         icon: "grid-outline",
         image: require("@/assets/images/narzedzia.png"),
         exercises: [
@@ -58,7 +57,7 @@ const CATEGORIES: Category[] = [
         label: "Uważność",
         headerTitle: "Uważność",
         description: "Krótkie prowadzone medytacje, które pomagają się wyciszyć.",
-        color: "#8B5CF6", // Violet
+        color: "#A78BFA", // Purple - Aurora Purple
         image: require("@/assets/images/uwaznosc.png"),
         icon: "flower-outline",
         exercises: [
@@ -73,7 +72,7 @@ const CATEGORIES: Category[] = [
         label: "CBT",
         headerTitle: "CBT",
         description: "Sprawdzone metody rozpoznawania i zmiany schematów myślowych.",
-        color: "#F59E0B", // Amber
+        color: "#FBBF24", // Amber - Northern Star
         icon: "analytics-outline",
         image: require("@/assets/images/cbt2.png"),
         exercises: [
@@ -88,7 +87,7 @@ const CATEGORIES: Category[] = [
         label: "Somatyczne",
         headerTitle: "Somatyczne",
         description: "Ćwiczenia oparte na ciele, pomagające uwolnić napięcie.",
-        color: "#10B981", // Emerald
+        color: "#34D399", // Emerald - Aurora Green
         icon: "body-outline",
         exercises: [
             { id: "s1", title: "Mapa Świadomości Ciała" },
@@ -102,12 +101,12 @@ const CATEGORIES: Category[] = [
         label: "Journaling",
         headerTitle: "Journaling",
         description: "Przestrzeń do swobodnego pisania i refleksji.",
-        color: "#F43F5E", // Rose
+        color: "#F472B6", // Pink - Aurora Rose
         icon: "book-outline",
         exercises: [
             { id: "j1", title: "Pisanie Swobodne" },
             { id: "j2", title: "Dziennik Wdzięczności" },
-            { id: "j3", title: "„Czego Dziś Potrzebuję?”" },
+            { id: "j3", title: "Czego Dziś Potrzebuję?" },
             { id: "j4", title: "Reframing Trudnej Sytuacji" },
         ],
     },
@@ -134,12 +133,12 @@ const CategoryTab = ({
             borderColor: interpolateColor(
                 progress.value,
                 [0, 1],
-                ["#ebebebc4", category.color]
-            ), 
+                ["#334155", category.color]
+            ),
             backgroundColor: interpolateColor(
                 progress.value,
                 [0, 1],
-                ["transparent", `${category.color}10`]
+                ["#1e293b", `${category.color}20`]
             ),
         };
     });
@@ -174,14 +173,22 @@ const CategoryTab = ({
             </Animated.View>
 
             {/* Label */}
-            <Text className={`text-xs font-bold mb-1 ${isActive ? "text-black" : "text-gray-500"}`}>
+            <Text className={`text-[11px] font-semibold mb-1.5 ${isActive ? "text-white" : "text-slate-500"}`}>
                 {category.label}
             </Text>
 
             {/* Active Indicator Line */}
             <Animated.View
-                className="h-[3px] rounded-full"
-                style={animatedIndicatorStyle}
+                className="h-[2px] rounded-full"
+                style={[
+                    animatedIndicatorStyle,
+                    {
+                        shadowColor: category.color,
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.8,
+                        shadowRadius: 4,
+                    }
+                ]}
             />
         </Pressable>
     );
@@ -222,11 +229,11 @@ export default function PracticeScreen() {
     }));
 
     return (
-        <AnimatedScreen className="bg-white flex-1">
-            <SafeAreaView edges={['top']} className="flex-1 bg-black pt-4">
+        <AnimatedScreen className="bg-slate-950 flex-1">
+            <SafeAreaView edges={['top']} className="flex-1 bg-slate-950 pt-4">
 
                 {/* Horizontal Category Tabs */}
-                <View className="pt-4 pb-4 bg-transparent">
+                <View className="pt-4 pb-6 bg-transparent">
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -251,26 +258,31 @@ export default function PracticeScreen() {
                     paddingBottom: 100,
                     paddingTop: 10
                 }}>
-                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]} className="pt-4 pb-4 bg-transparent">
+                    <Animated.View style={[animatedContentStyle, { paddingHorizontal: 20 }]} className="pt-2 pb-4 bg-transparent">
 
                         {/* Dynamic Header */}
-                        <View className="flex-row items-center justify-between mb-8">
+                        <View className="flex-row items-center justify-between mb-10">
                             <View className="flex-1 pr-4">
-                                <Text className="text-2xl font-bold text-white mb-2 leading-tight">
+                                <Text className="text-3xl font-bold text-white mb-2 tracking-tight">
                                     {currentCategory.headerTitle}
                                 </Text>
-                                {/* <Text className="text-base text-gray-400 leading-relaxed">
+                                <Text className="text-sm text-slate-400 leading-relaxed font-light">
                                     {currentCategory.description}
-                                </Text> */}
+                                </Text>
                             </View>
 
-                            {/* Large Icon Placeholder */}
-                            <View className="w-20 h-20 rounded-full items-center justify-center">
-                                {/*<Ionicons name={currentCategory.icon} size={60} color={currentCategory.color} />*/}
-                                <Image
-                                    source={currentCategory.image}
-                                    className="w-full h-full object-contain"
+                            {/* Icon Box with Glow */}
+                            <View className="relative">
+                                <View
+                                    className="absolute inset-0 blur-2xl rounded-full opacity-20"
+                                    style={{ backgroundColor: currentCategory.color, transform: [{ scale: 1.5 }] }}
                                 />
+                                <View className="w-20 h-20 rounded-3xl items-center justify-center bg-slate-900/40 border border-slate-800 overflow-hidden">
+                                    <Image
+                                        source={currentCategory.image}
+                                        className="w-14 h-14 object-contain"
+                                    />
+                                </View>
                             </View>
                         </View>
 
@@ -285,12 +297,18 @@ export default function PracticeScreen() {
                                             router.push('/practice/thought-recording');
                                         }
                                     }}
-                                    className="bg-indigo-950 border border-gray-200 rounded-[24px] p-5 flex-row items-center shadow-sm shadow-gray-100"
+                                    className="bg-slate-900/60 border border-slate-700/50 rounded-[24px] p-5 flex-row items-center"
+                                    style={{
+                                        shadowColor: currentCategory.color,
+                                        shadowOffset: { width: 0, height: 4 },
+                                        shadowOpacity: 0.15,
+                                        shadowRadius: 12,
+                                    }}
                                 >
                                     {/* Icon Box */}
                                     <View
                                         className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
-                                        style={{ backgroundColor: `${currentCategory.color}15` }}
+                                        style={{ backgroundColor: `${currentCategory.color}25` }}
                                     >
                                         {exercise.image ? (
                                             <Image
@@ -305,22 +323,26 @@ export default function PracticeScreen() {
 
                                     {/* Text Info */}
                                     <View className="flex-1">
-                                        <Text className="text-lg font-bold text-black mb-1">
+                                        <Text className="text-[17px] font-medium text-white/90 mb-1">
                                             {exercise.title}
                                         </Text>
                                         <View className="flex-row items-center">
                                             {exercise.duration && (
-                                                <Text className="text-xs text-gray-400 font-medium">
+                                                <Text className="text-xs text-slate-500 font-normal">
                                                     {exercise.duration}
                                                 </Text>
                                             )}
                                             {exercise.progress !== undefined && (
-                                                <View className="flex-1 ml-2 h-1.5 bg-gray-100 rounded-full max-w-[100px]">
+                                                <View className="flex-1 ml-3 h-[3px] bg-slate-800 rounded-full max-w-[80px]">
                                                     <View
                                                         className="h-full rounded-full"
                                                         style={{
                                                             width: `${exercise.progress * 100}%`,
-                                                            backgroundColor: currentCategory.color
+                                                            backgroundColor: currentCategory.color,
+                                                            shadowColor: currentCategory.color,
+                                                            shadowOffset: { width: 0, height: 0 },
+                                                            shadowOpacity: 0.5,
+                                                            shadowRadius: 3,
                                                         }}
                                                     />
                                                 </View>
@@ -329,7 +351,7 @@ export default function PracticeScreen() {
                                     </View>
 
                                     {/* Chevron */}
-                                    <Ionicons name="chevron-forward" size={20} color="#E5E7EB" />
+                                    <Ionicons name="chevron-forward" size={20} color="#64748B" />
                                 </TouchableOpacity>
                             ))}
                         </View>

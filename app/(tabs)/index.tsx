@@ -5,6 +5,13 @@ import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Dzień dobry';
+        if (hour < 18) return 'Witaj';
+        return 'Dobry wieczór';
+    };
+
     return (
         // <ImageBackground
         //     source={require("../../assets/images/13.jpg")}
@@ -26,7 +33,7 @@ export default function HomeScreen() {
             {/* 1. Top Greeting Area - Fixed at top */}
             <View className="px-8 pt-2 pb-4">
                 <Text className="text-slate-300 text-3xl font-light mb-2">
-                    Cześć, Bartek
+                    {getGreeting()}, Bartek
                 </Text>
                 <Text className="text-white/60 text-lg font-light tracking-wide">
                     Jak jest dziś w środku?

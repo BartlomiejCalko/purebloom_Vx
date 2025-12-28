@@ -31,7 +31,7 @@ export default function EmotionalMirrorScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-slate-950">
-            {/* Top Area: Interactive Blob */}
+            {/* Top Area: Interactive Particles */}
             <View className="h-[45%] w-full">
                 {/* Reduced height slightly to give more room for controls */}
                 <EmotionalParticles
