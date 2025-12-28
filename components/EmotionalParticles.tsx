@@ -1,6 +1,6 @@
-import { Canvas, Image, Points, Skia, useImage, vec } from "@shopify/react-native-skia";
+import { Canvas, Image, Points, useImage } from "@shopify/react-native-skia";
 import React, { useMemo } from "react";
-import { Dimensions } from "react-native";
+import { Dimensions, View } from "react-native";
 import { SharedValue, useDerivedValue, useFrameCallback, useSharedValue } from "react-native-reanimated";
 
 interface EmotionalParticlesProps {
@@ -12,10 +12,10 @@ interface EmotionalParticlesProps {
     mode?: "passive" | "interactive";
 }
 
-const MAX_PARTICLES = 300;
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const CENTER_X = SCREEN_WIDTH / 2;
-const CENTER_Y = SCREEN_HEIGHT / 2;
+const MAX_PARTICLES = 20;
+// Default dimensions (will be updated by onLayout)
+let SCREEN_WIDTH = Dimensions.get("window").width;
+let SCREEN_HEIGHT = Dimensions.get("window").height;
 
 // Generate initial random state for particles in 3D space
 const createInitialParticles = () => {
@@ -40,15 +40,19 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
     energy,
     mode = "interactive",
 }) => {
+    const [dims, setDims] = React.useState({ width: SCREEN_WIDTH, height: 400 });
     const initialParticles = useMemo(() => createInitialParticles(), []);
 
     // Load background images
-    const bwImage = useImage(require("../assets/images/northern-bw.jpg"));
-    const colorImage = useImage(require("../assets/images/northern.jpg"));
+    const warmWaves = useImage(require("../assets/images/cieple_fale.jpg"));
+    const neutralWaves = useImage(require("../assets/images/neutralne_fale.jpg"));
+    const unpleasantWaves = useImage(require("../assets/images/nieprzyjemne_fale.jpg"));
 
-    // Mutable values for Skia to render
-    const positions = useSharedValue(initialParticles.map(() => vec(0, 0)));
-    const colors = useSharedValue(initialParticles.map(() => Skia.Color("white")));
+    // SHARED VALUES FOR RENDERING
+    // For a small count of 20 particles, standard arrays are very stable on iOS
+    // and correctly trigger Reanimated redraws when replaced with new references.
+    const positions = useSharedValue<any[]>([]);
+    const colors = useSharedValue<string[]>([]);
     const time = useSharedValue(0);
 
     useFrameCallback((frameInfo) => {
@@ -56,180 +60,148 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         const dt = frameInfo.timeSincePreviousFrame / 1000;
         time.value += dt;
 
-        // Current state values
-        const i = intensity.value; // 0..1
-        const v = valence.value;   // 0..1
-        const h = heaviness.value; // 0..1
-        const s = stability.value; // 0..1
-        const e = energy.value;    // 0..1
+        const W = dims.width;
+        const H = dims.height;
+        const CX = W / 2;
+        const CY = H / 2;
 
-        const activeCount = Math.floor(10 + i * (MAX_PARTICLES - 10));
+        const i = intensity.value;
+        const v = valence.value; // 0 (Pleasant) to 1 (Unpleasant)
+        const h = heaviness.value;
+        const s = stability.value;
+        const e = energy.value;
 
-        // Intensity also mapped to Base Size Multiplier
-        // i=0 -> 0.5x size, i=1 -> 1.5x size
-        const sizeMultiplier = 0.5 + i * 1.0;
+        // Intensity mapping
+        // With MAX_PARTICLES=20, we can use most of them or vary size
+        const activeCount = MAX_PARTICLES;
 
-        // Heaviness: Y-axis gravity (ODWRÓCONE)
-        // h=0 (Lewo/Ciężar) -> Down (positive Y) = opadanie
-        // h=1 (Prawo/Lekkość) -> Up (negative Y) = unoszenie się
-        const gravity = (0.65 - h) * 800; // 👈 ZMIEŃ TĘ WARTOŚĆ (80-150) aby kontrolować siłę grawitacji
-
-        // Energy: Z-axis speed
-        // e=0 -> Very slow drift
-        // e=1 -> Fast forward movement (Z decreases)
+        const gravity = (0.65 - h) * 800;
         const zSpeed = 0.1 + e * 1.5;
-
-        // Stability: Noise amplitude
         const chaos = (1 - s) * 25;
 
-        const newPositions = [];
-        const newColors = [];
+        // VALENCE COLOR INTERPOLATION (Cool Blue to Warm Yellow)
+        // Pleasant (v=0) -> Cool Light Blue: rgb(0, 191, 255)
+        // Neutral (v=0.5) -> Soft White: rgb(240, 248, 255)
+        // Unpleasant (v=1) -> Warm Sunny Yellow: rgb(255, 215, 0)
 
-        // Particle Color Mapping: Blue → White → Magenta
-        // v=0 (Unpleasant) -> Blue (#4A90E2)
-        // v=0.5 (Neutral) -> White (#FFFFFF)
-        // v=1 (Pleasant) -> Magenta (#E94B9E)
-        let r: number, g: number, b: number;
+        const cCool = { r: 0, g: 191, b: 255 };
+        const cNeut = { r: 240, g: 248, b: 255 };
+        const cWarm = { r: 255, g: 215, b: 0 };
 
+        let r, g, b;
         if (v < 0.5) {
-            // Blue to White transition
-            const t = v * 2; // 0..1
-            r = Math.floor(74 + (255 - 74) * t);
-            g = Math.floor(144 + (255 - 144) * t);
-            b = Math.floor(226 + (255 - 226) * t);
+            const t = v * 2;
+            r = cCool.r + (cNeut.r - cCool.r) * t;
+            g = cCool.g + (cNeut.g - cCool.g) * t;
+            b = cCool.b + (cNeut.b - cCool.b) * t;
         } else {
-            // White to Magenta transition
-            const t = (v - 0.5) * 2; // 0..1
-            r = Math.floor(255 + (233 - 255) * t);
-            g = Math.floor(255 + (75 - 255) * t);
-            b = Math.floor(255 + (158 - 255) * t);
+            const t = (v - 0.5) * 2;
+            r = cNeut.r + (cWarm.r - cNeut.r) * t;
+            g = cNeut.g + (cWarm.g - cNeut.g) * t;
+            b = cNeut.b + (cWarm.b - cNeut.b) * t;
         }
+
+        const nextPositions: any[] = [];
+        const nextColors: string[] = [];
 
         for (let idx = 0; idx < MAX_PARTICLES; idx++) {
             const p = initialParticles[idx];
 
-            if (idx > activeCount) {
-                newPositions.push(vec(-100, -100));
-                newColors.push(Skia.Color("#00000000"));
-                continue;
-            }
-
-            // Update 3D State
-
-            // 1. Z Movement (Travel) - Energy controls Z speed for depth effect
+            // 1. Z Movement
             p.z -= zSpeed * dt * p.baseSpeed;
             if (p.z <= 0.1) {
                 p.z = 3.0;
-                // Reshuffle X/Y slightly when respawning
-                p.x = (Math.random() - 0.5) * SCREEN_WIDTH * 2;
-                p.y = (Math.random() - 0.5) * SCREEN_HEIGHT * 2;
+                p.x = (Math.random() - 0.5) * W * 2;
+                p.y = (Math.random() - 0.5) * H * 2;
             }
 
-            // 2. Y Movement (Gravity/Heaviness) - Energy multiplies gravity speed
-            // Energy affects how fast gravity acts, not the direction
-            const energyMultiplier = 0.3 + e * 1.7; // 0.3x to 2x speed
+            // 2. Y Movement
+            const energyMultiplier = 0.3 + e * 1.7;
             p.y += gravity * dt * energyMultiplier;
 
-            // Wrap Y in world space to keep 'em coming
-            if (p.y > SCREEN_HEIGHT) p.y = -SCREEN_HEIGHT;
-            if (p.y < -SCREEN_HEIGHT) p.y = SCREEN_HEIGHT;
+            if (p.y > H) p.y = -H;
+            if (p.y < -H) p.y = H;
 
-
-            // 3. Stability (Noise) - Energy also affects chaos speed
-            // Add simple sine noise to X/Y based on time
+            // 3. Noise
             const noiseX = Math.sin(time.value * 2 + p.phase + p.noiseOffsetX) * chaos * energyMultiplier;
             const noiseY = Math.cos(time.value * 2 + p.phase + p.noiseOffsetY) * chaos * energyMultiplier;
 
-            // Project to 2D
-            // x_screen = (x / z) + center_x
-            // y_screen = (y / z) + center_y
-            // FOV factor usually ~ distance
+            // Project
             const scale = 1.0 / p.z;
-            const projectedX = (p.x + noiseX) * scale + CENTER_X;
-            const projectedY = (p.y + noiseY) * scale + CENTER_Y;
+            const px = ((p.x + noiseX) * scale) + CX;
+            const py = ((p.y + noiseY) * scale) + CY;
 
-            newPositions.push(vec(projectedX, projectedY));
+            nextPositions.push({ x: px, y: py });
 
-            // Alpha calculation
-            // Fade in/out based on Z (fog)
-            // Close (z small) -> Fade out? Or bright?
-            // Far (z large) -> Fade out
-            // Lets fade out at z=3 and z=0.1
+            // Alpha and Blink
             let alpha = 1.0;
-            if (p.z > 2.5) alpha = (3.0 - p.z) * 2; // Fade in from far
-            if (p.z < 0.5) alpha = p.z * 2; // Fade out when too close (passing camera)
-            if (alpha > 1) alpha = 1;
-            if (alpha < 0) alpha = 0;
+            if (p.z > 2.5) alpha = (3.0 - p.z) * 2;
+            if (p.z < 0.5) alpha = p.z * 2;
+            alpha = Math.max(0, Math.min(1, alpha));
 
-            // Blink effect
             const blink = 0.7 + 0.3 * Math.sin(time.value * 3 + p.phase);
+            const finalAlpha = alpha * blink;
 
-            // Final alpha
-            const finalAlpha = Math.floor(alpha * blink * 255);
-
-            // Add color
-            // Using string interpolation for color is a bit slow, but simplest without packing logic
-            // newColors.push(Skia.Color(`rgba(${r}, ${g}, ${b}, ${alpha * blink})`));
-
-            // Manual bit packing for speed if needed, but Skia.Color works well with strings.
-            // But let's optimize string creation?
-            // Actually, we can just use `alpha` in color.
-            // NOTE: @ts-ignore for colors prop
-            newColors.push(Skia.Color(`rgba(${r}, ${g}, ${b}, ${alpha * blink})`));
+            // Construct explicit rgba string for maximum iOS visibility
+            nextColors.push(`rgba(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)}, ${finalAlpha})`);
         }
 
-        positions.value = newPositions;
-        colors.value = newColors;
+        // Force redraw by providing new array references
+        positions.value = nextPositions;
+        colors.value = nextColors;
     });
 
-    // Opacity for color image based on valence
-    const colorImageOpacity = useDerivedValue(() => {
-        return valence.value; // 0 = fully BW, 1 = fully color
-    });
+    const currentStrokeWidth = useDerivedValue(() => 6 + (intensity.value * 54));
 
-    const strokeWidth = useDerivedValue(() => {
-        return 6 * (0.6 + intensity.value);
-    });
+    // Opacities for the three background states
+    const warmOpacity = useDerivedValue(() => Math.max(0, Math.min(1, 1 - valence.value * 2)));
+    const neutralOpacity = useDerivedValue(() => Math.max(0, Math.min(1, 1 - Math.abs(valence.value - 0.5) * 2)));
+    const unpleasantOpacity = useDerivedValue(() => Math.max(0, Math.min(1, (valence.value - 0.5) * 2)));
 
     return (
-        <Canvas style={{ flex: 1 }} pointerEvents="none">
-            {/* Base BW Image */}
-            {bwImage && (
-                <Image
-                    image={bwImage}
-                    x={0}
-                    y={0}
-                    width={SCREEN_WIDTH}
-                    height={SCREEN_HEIGHT}
-                    fit="fill"
-                />
-            )}
+        <View
+            style={{ flex: 1, backgroundColor: 'black' }}
+            onLayout={(e) => {
+                const { width, height } = e.nativeEvent.layout;
+                setDims({ width, height });
+            }}
+        >
+            <Canvas style={{ flex: 1 }} pointerEvents="none">
+                {/* Background images crossfade */}
+                {warmWaves && (
+                    <Image
+                        image={warmWaves}
+                        x={0} y={0} width={dims.width} height={dims.height}
+                        fit="cover" opacity={warmOpacity}
+                    />
+                )}
+                {neutralWaves && (
+                    <Image
+                        image={neutralWaves}
+                        x={0} y={0} width={dims.width} height={dims.height}
+                        fit="cover" opacity={neutralOpacity}
+                    />
+                )}
+                {unpleasantWaves && (
+                    <Image
+                        image={unpleasantWaves}
+                        x={0} y={0} width={dims.width} height={dims.height}
+                        fit="cover" opacity={unpleasantOpacity}
+                    />
+                )}
 
-            {/* Color Image with opacity based on valence */}
-            {colorImage && (
-                <Image
-                    image={colorImage}
-                    x={0}
-                    y={0}
-                    width={SCREEN_WIDTH}
-                    height={SCREEN_HEIGHT}
-                    fit="fill"
-                    opacity={colorImageOpacity}
+                {/* Particle Points */}
+                <Points
+                    points={positions}
+                    mode="points"
+                    // @ts-ignore
+                    colors={colors}
+                    // @ts-ignore
+                    strokeWidth={currentStrokeWidth}
+                    style="stroke"
+                    strokeCap="round"
                 />
-            )}
-
-            {/* @ts-ignore */}
-            <Points
-                points={positions}
-                mode="points"
-                color={Skia.Color("white")}
-                // @ts-ignore
-                colors={colors}
-                // @ts-ignore
-                strokeWidth={strokeWidth}
-                style="stroke"
-                strokeCap="round"
-            />
-        </Canvas>
+            </Canvas>
+        </View>
     );
 };
