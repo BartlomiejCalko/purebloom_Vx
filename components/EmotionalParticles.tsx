@@ -1,6 +1,7 @@
-import { Canvas, Circle, Image, useImage } from "@shopify/react-native-skia";
-import React, { useMemo } from "react";
-import { Dimensions, View } from "react-native";
+import { Canvas, Circle } from "@shopify/react-native-skia";
+import { MeshGradientView } from "expo-mesh-gradient";
+import React, { useEffect, useMemo, useState } from "react";
+import { Dimensions, Platform, StyleSheet, View } from "react-native";
 import { SharedValue, useDerivedValue, useFrameCallback, useSharedValue } from "react-native-reanimated";
 
 interface EmotionalParticlesProps {
@@ -12,10 +13,34 @@ interface EmotionalParticlesProps {
     mode?: "passive" | "interactive";
 }
 
-const MAX_PARTICLES = 20;
+// Maximum particles at full intensity
+const MAX_PARTICLES = 40;
+// Minimum particles at lowest intensity
+const MIN_PARTICLES = 8;
 // Default dimensions (will be updated by onLayout)
 let SCREEN_WIDTH = Dimensions.get("window").width;
 let SCREEN_HEIGHT = Dimensions.get("window").height;
+
+// Helper function to interpolate between two hex colors
+const interpolateColor = (color1: string, color2: string, t: number): string => {
+    const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+        } : { r: 0, g: 0, b: 0 };
+    };
+
+    const rgb1 = hexToRgb(color1);
+    const rgb2 = hexToRgb(color2);
+
+    const r = Math.round(rgb1.r + (rgb2.r - rgb1.r) * t);
+    const g = Math.round(rgb1.g + (rgb2.g - rgb1.g) * t);
+    const b = Math.round(rgb1.b + (rgb2.b - rgb1.b) * t);
+
+    return `rgb(${r}, ${g}, ${b})`;
+};
 
 // Particle render data interface
 interface ParticleRenderData {
@@ -34,8 +59,9 @@ interface ParticleCircleProps {
 const ParticleCircle: React.FC<ParticleCircleProps> = ({ index, particlesData }) => {
     const cx = useDerivedValue(() => particlesData.value[index]?.x ?? 0);
     const cy = useDerivedValue(() => particlesData.value[index]?.y ?? 0);
-    const r = useDerivedValue(() => particlesData.value[index]?.radius ?? 10);
-    const color = useDerivedValue(() => particlesData.value[index]?.color ?? "rgba(255, 200, 180, 0.8)");
+    // If particle data doesn't exist (inactive), radius = 0 (invisible)
+    const r = useDerivedValue(() => particlesData.value[index]?.radius ?? 0);
+    const color = useDerivedValue(() => particlesData.value[index]?.color ?? "transparent");
 
     return <Circle cx={cx} cy={cy} r={r} color={color} />;
 };
@@ -63,13 +89,55 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
     energy,
     mode = "interactive",
 }) => {
-    const [dims, setDims] = React.useState({ width: SCREEN_WIDTH, height: 400 });
+    const [dims, setDims] = useState({ width: SCREEN_WIDTH, height: 400 });
     const initialParticles = useMemo(() => createInitialParticles(), []);
 
-    // Load background images
-    const warmWaves = useImage(require("../assets/images/cieple_fale.jpg"));
-    const neutralWaves = useImage(require("../assets/images/neutralne_fale.jpg"));
-    const unpleasantWaves = useImage(require("../assets/images/nieprzyjemne_fale.jpg"));
+    // Gradient colors state - interpolated based on valence
+    const [gradientColors, setGradientColors] = useState<string[]>([]);
+
+    // Warm pastel colors (Pleasant - valence = 0)
+    // Rich but soft peach, coral, warm pink palette - saturated but not garish
+    const warmColors = useMemo(() => [
+        "#F0A880", "#E88090", "#F0C080",  // Top row: rich peach, soft coral, golden cream
+        "#E08898", "#E078A8", "#E0A878",  // Middle row: rose pink, orchid, warm amber
+        "#D89060", "#E07058", "#D06088",  // Bottom row: burnt sienna, terracotta, raspberry
+    ], []);
+
+    // Cool pastel colors (Unpleasant - valence = 1)
+    // Rich but soft lavender, mint, sky blue palette - saturated but not garish
+    const coolColors = useMemo(() => [
+        "#78C8A0", "#68A8C8", "#A888C8",  // Top row: rich mint, ocean blue, rich lavender
+        "#58A8C8", "#8088C8", "#68B8A8",  // Middle row: teal blue, periwinkle, seafoam
+        "#9878B8", "#68B0E0", "#88C888",  // Bottom row: amethyst, sky blue, spring green
+    ], []);
+
+    // Mesh grid points (3x3)
+    const meshPoints = useMemo(() => [
+        [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+        [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+        [0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
+    ], []);
+
+    // Update gradient colors when valence changes
+    // valence = 0 (Pleasant) → Warm colors
+    // valence = 1 (Unpleasant) → Cool colors
+    useEffect(() => {
+        const updateColors = () => {
+            const v = valence.value;
+            const interpolatedColors = warmColors.map((warmColor, idx) => {
+                const coolColor = coolColors[idx];
+                return interpolateColor(warmColor, coolColor, v);
+            });
+            setGradientColors(interpolatedColors);
+        };
+
+        // Initial update
+        updateColors();
+
+        // Set up interval to sync with valence changes
+        const interval = setInterval(updateColors, 50);
+        return () => clearInterval(interval);
+    }, [valence, warmColors, coolColors]);
 
     // SHARED VALUES FOR RENDERING
     // Store particle render data: position, color, and radius
@@ -92,22 +160,24 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         const s = stability.value;
         const e = energy.value;
 
-        // Intensity mapping
-        // With MAX_PARTICLES=20, we can use most of them or vary size
-        const activeCount = MAX_PARTICLES;
+        // Gravity: h=0 (Lightness) → float up, h=1 (Heaviness) → fall down
+        const gravity = (h - 0.35) * 800;
+        // Energy affects Z speed: reduced from 1.5 to 0.8 for subtler effect
+        const zSpeed = 0.1 + e * 0.8;
+        
+        // Chaos: s=0 (Stable) → low chaos, s=1 (Chaotic) → high chaos
+        // Significantly increased range for dramatic effect
+        const chaos = s * 60;
 
-        const gravity = (0.65 - h) * 800;
-        const zSpeed = 0.1 + e * 1.5;
-        const chaos = (1 - s) * 25;
+        // VALENCE COLOR INTERPOLATION (Bright Warm to Bright Cool)
+        // Brighter, more saturated colors for better visibility against muted gradient
+        // Pleasant (v=0) -> Bright Warm (Peach/Coral): rgb(255, 220, 200)
+        // Neutral (v=0.5) -> Bright Neutral (Light Lavender): rgb(245, 230, 255)
+        // Unpleasant (v=1) -> Bright Cool (Light Sky Blue): rgb(200, 235, 255)
 
-        // VALENCE COLOR INTERPOLATION (Pastel Warm to Pastel Cool)
-        // Pleasant (v=0) -> Pastel Warm (Soft Peach/Coral): rgb(255, 200, 180)
-        // Neutral (v=0.5) -> Pastel Neutral (Soft Lavender): rgb(230, 210, 240)
-        // Unpleasant (v=1) -> Pastel Cool (Soft Sky Blue): rgb(180, 210, 235)
-
-        const cWarm = { r: 255, g: 200, b: 180 };   // Soft Peach/Coral (Pleasant)
-        const cNeut = { r: 230, g: 210, b: 240 };   // Soft Lavender (Neutral)
-        const cCool = { r: 180, g: 210, b: 235 };   // Soft Sky Blue (Unpleasant)
+        const cWarm = { r: 255, g: 220, b: 200 };   // Bright Peach/Coral (Pleasant)
+        const cNeut = { r: 245, g: 230, b: 255 };   // Light Lavender (Neutral)
+        const cCool = { r: 200, g: 235, b: 255 };   // Light Sky Blue (Unpleasant)
 
         let r, g, b;
         if (v < 0.5) {
@@ -125,31 +195,53 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         }
 
         // Base radius depends on intensity
-        const baseRadius = 3 + (i * 27);
+        const baseRadius = 3 + (i * 20);
+
+        // Active particle count depends on intensity
+        // i=0 -> MIN_PARTICLES, i=1 -> MAX_PARTICLES
+        const activeCount = Math.floor(MIN_PARTICLES + (MAX_PARTICLES - MIN_PARTICLES) * i);
 
         const nextParticlesData: typeof particlesData.value = [];
 
-        for (let idx = 0; idx < MAX_PARTICLES; idx++) {
+        for (let idx = 0; idx < activeCount; idx++) {
             const p = initialParticles[idx];
 
-            // 1. Z Movement
-            p.z -= zSpeed * dt * p.baseSpeed;
+            // 1. Z Movement with chaos variation
+            const zChaosVariation = 1 + (Math.sin(time.value * 5 + p.phase) * s * 0.5);
+            p.z -= zSpeed * dt * p.baseSpeed * zChaosVariation;
             if (p.z <= 0.1) {
                 p.z = 3.0;
                 p.x = (Math.random() - 0.5) * W * 2;
                 p.y = (Math.random() - 0.5) * H * 2;
             }
 
-            // 2. Y Movement
-            const energyMultiplier = 0.3 + e * 1.7;
-            p.y += gravity * dt * energyMultiplier;
+            // 2. Y Movement with chaotic direction changes
+            // Energy multiplier: reduced from 1.7 to 1.0 for subtler effect
+            const energyMultiplier = 0.4 + e * 1.0;
+            // Add sudden direction changes when chaotic
+            const chaosDirectionFlip = s > 0.5 ? Math.sin(time.value * 4 + p.noiseOffsetY) * s * 0.8 : 0;
+            p.y += gravity * dt * energyMultiplier * (1 + chaosDirectionFlip);
+            
+            // Random X drift when chaotic
+            const chaosDriftX = Math.sin(time.value * 3 + p.noiseOffsetX) * s * 150 * dt;
+            p.x += chaosDriftX;
 
             if (p.y > H) p.y = -H;
             if (p.y < -H) p.y = H;
 
-            // 3. Noise
-            const noiseX = Math.sin(time.value * 2 + p.phase + p.noiseOffsetX) * chaos * energyMultiplier;
-            const noiseY = Math.cos(time.value * 2 + p.phase + p.noiseOffsetY) * chaos * energyMultiplier;
+            // 3. Noise and Chaos
+            // Base oscillation
+            const baseNoiseX = Math.sin(time.value * 2 + p.phase + p.noiseOffsetX);
+            const baseNoiseY = Math.cos(time.value * 2 + p.phase + p.noiseOffsetY);
+            
+            // Additional chaotic layers when stability is low
+            const chaosFactor = s; // 0 = stable, 1 = chaotic
+            const fastOscillation = Math.sin(time.value * 8 + p.phase * 3) * chaosFactor;
+            const erraticJitter = Math.sin(time.value * 15 + p.noiseOffsetX * 2) * chaosFactor * 0.5;
+            
+            // Combined noise with multiple frequencies for more organic chaos
+            const noiseX = (baseNoiseX + fastOscillation + erraticJitter) * chaos * energyMultiplier;
+            const noiseY = (baseNoiseY + fastOscillation * 0.8 - erraticJitter) * chaos * energyMultiplier;
 
             // Project
             const scale = 1.0 / p.z;
@@ -160,13 +252,17 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
             const radius = baseRadius * scale;
 
             // Alpha and Blink
+            // Base alpha depends on depth (z) - fade in/out at extremes
             let alpha = 1.0;
             if (p.z > 2.5) alpha = (3.0 - p.z) * 2;
             if (p.z < 0.5) alpha = p.z * 2;
             alpha = Math.max(0, Math.min(1, alpha));
 
-            const blink = 0.7 + 0.3 * Math.sin(time.value * 3 + p.phase);
-            const finalAlpha = alpha * blink;
+            // Blink effect: oscillates between 0.85 and 1.0 (subtle blink, more opaque)
+            const blink = 0.9 + 0.15 * Math.sin(time.value * 3 + p.phase);
+            
+            // Final alpha - minimum 0.6 to ensure particles are always visible
+            const finalAlpha = Math.max(0.9, alpha * blink);
 
             // Construct rgba color string
             const color = `rgba(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)}, ${finalAlpha})`;
@@ -178,43 +274,34 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         particlesData.value = nextParticlesData;
     });
 
-    // Opacities for the three background states
-    const warmOpacity = useDerivedValue(() => Math.max(0, Math.min(1, 1 - valence.value * 2)));
-    const neutralOpacity = useDerivedValue(() => Math.max(0, Math.min(1, 1 - Math.abs(valence.value - 0.5) * 2)));
-    const unpleasantOpacity = useDerivedValue(() => Math.max(0, Math.min(1, (valence.value - 0.5) * 2)));
-
     return (
         <View
-            style={{ flex: 1, backgroundColor: 'black' }}
+            style={styles.container}
             onLayout={(e) => {
                 const { width, height } = e.nativeEvent.layout;
                 setDims({ width, height });
             }}
         >
-            <Canvas style={{ flex: 1 }} pointerEvents="none">
-                {/* Background images crossfade */}
-                {warmWaves && (
-                    <Image
-                        image={warmWaves}
-                        x={0} y={0} width={dims.width} height={dims.height}
-                        fit="cover" opacity={warmOpacity}
-                    />
-                )}
-                {neutralWaves && (
-                    <Image
-                        image={neutralWaves}
-                        x={0} y={0} width={dims.width} height={dims.height}
-                        fit="cover" opacity={neutralOpacity}
-                    />
-                )}
-                {unpleasantWaves && (
-                    <Image
-                        image={unpleasantWaves}
-                        x={0} y={0} width={dims.width} height={dims.height}
-                        fit="cover" opacity={unpleasantOpacity}
-                    />
-                )}
+            {/* MeshGradient Background - iOS only */}
+            {Platform.OS === "ios" && gradientColors.length === 9 && (
+                <MeshGradientView
+                    style={StyleSheet.absoluteFill}
+                    columns={3}
+                    rows={3}
+                    colors={gradientColors}
+                    points={meshPoints}
+                    smoothsColors={true}
+                    ignoresSafeArea={true}
+                />
+            )}
 
+            {/* Fallback gradient for Android - simple linear gradient effect */}
+            {Platform.OS === "android" && (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: gradientColors[4] || "#D4C4E8" }]} />
+            )}
+
+            {/* Canvas for particles */}
+            <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
                 {/* Particle Circles */}
                 {Array.from({ length: MAX_PARTICLES }).map((_, idx) => (
                     <ParticleCircle key={idx} index={idx} particlesData={particlesData} />
@@ -223,3 +310,10 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#1a1a2e",
+    },
+});

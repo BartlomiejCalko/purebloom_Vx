@@ -1,7 +1,9 @@
 import { HomeEmotionalMirrorSection } from "@/components/HomeEmotionalMirrorSection";
 import { RecommendedExercises } from "@/components/RecommendedExercises";
+import { MeshGradientView } from "expo-mesh-gradient";
 import { StatusBar } from "expo-status-bar";
-import { ScrollView, Text, View } from "react-native";
+import { useMemo } from "react";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
@@ -12,30 +14,50 @@ export default function HomeScreen() {
         return 'Dobry wieczór';
     };
 
+    // Soft pastel gradient colors - deep navy to soft lavender/rose tones
+    // Creates a calming, therapeutic atmosphere
+    const gradientColors = useMemo(() => [
+        "#1a1a2e", "#252547", "#2a2a4a",  // Top row: deep navy tones
+        "#2d2a4a", "#3a3560", "#352a4a",  // Middle row: purple-navy transition
+        "#3a2a45", "#402a50", "#352a48",  // Bottom row: subtle plum undertones
+    ], []);
+
+    // Mesh grid points (3x3)
+    const meshPoints = useMemo(() => [
+        [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+        [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+        [0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
+    ], []);
+
     return (
-        // <ImageBackground
-        //     source={require("../../assets/images/13.jpg")}
-        //     style={{ flex: 1 }}
-        //     // You can adjust the image position here using transforms
-        //     // e.g. translateX: -50 shifts it left, scale: 1.2 zooms in, etc.
-        //     imageStyle={{
-        //         resizeMode: "cover", // Keeps it covering the screen
-        //         // We scale it up so when we move it, we don't see empty space
-        //         transform: [
-        //             { scale: 1.0 },
-        //             { translateX: 0 } // Shift right to see more of the left side
-        //         ]
-        //     }}
-        // >
-        <SafeAreaView className="flex-1 bg-black">
+        <View style={styles.container}>
+            {/* MeshGradient Background - iOS only */}
+            {Platform.OS === "ios" && (
+                <MeshGradientView
+                    style={StyleSheet.absoluteFill}
+                    columns={3}
+                    rows={3}
+                    colors={gradientColors}
+                    points={meshPoints}
+                    smoothsColors={true}
+                    ignoresSafeArea={true}
+                />
+            )}
+
+            {/* Fallback for Android - simple gradient-like background */}
+            {Platform.OS === "android" && (
+                <View style={[StyleSheet.absoluteFill, styles.androidBackground]} />
+            )}
+
+            <SafeAreaView className="flex-1">
             <StatusBar style="light" />
 
             {/* 1. Top Greeting Area - Fixed at top */}
             <View className="px-8 pt-2 pb-4">
-                <Text className="text-slate-300 text-3xl font-light mb-2">
+                <Text className="text-slate-300 text-xl font-light mb-1">
                     {getGreeting()}, Bartek
                 </Text>
-                <Text className="text-white/60 text-lg font-light tracking-wide">
+                <Text className="text-white/60 text-md font-light tracking-wide">
                     Jak jest dziś w środku?
                 </Text>
             </View>
@@ -58,6 +80,16 @@ export default function HomeScreen() {
                 <View className="h-32" />
             </ScrollView>
         </SafeAreaView>
-        // </ImageBackground>
+        </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#1a1a2e", // Fallback color
+    },
+    androidBackground: {
+        backgroundColor: "#252547", // Simple solid for Android
+    },
+});
