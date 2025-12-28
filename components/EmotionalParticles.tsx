@@ -1,4 +1,4 @@
-import { Canvas, Image, Points, useImage } from "@shopify/react-native-skia";
+import { Canvas, Circle, Image, useImage } from "@shopify/react-native-skia";
 import React, { useMemo } from "react";
 import { Dimensions, View } from "react-native";
 import { SharedValue, useDerivedValue, useFrameCallback, useSharedValue } from "react-native-reanimated";
@@ -16,6 +16,29 @@ const MAX_PARTICLES = 20;
 // Default dimensions (will be updated by onLayout)
 let SCREEN_WIDTH = Dimensions.get("window").width;
 let SCREEN_HEIGHT = Dimensions.get("window").height;
+
+// Particle render data interface
+interface ParticleRenderData {
+    x: number;
+    y: number;
+    color: string;
+    radius: number;
+}
+
+// Individual particle circle component with derived values
+interface ParticleCircleProps {
+    index: number;
+    particlesData: SharedValue<ParticleRenderData[]>;
+}
+
+const ParticleCircle: React.FC<ParticleCircleProps> = ({ index, particlesData }) => {
+    const cx = useDerivedValue(() => particlesData.value[index]?.x ?? 0);
+    const cy = useDerivedValue(() => particlesData.value[index]?.y ?? 0);
+    const r = useDerivedValue(() => particlesData.value[index]?.radius ?? 10);
+    const color = useDerivedValue(() => particlesData.value[index]?.color ?? "rgba(255, 200, 180, 0.8)");
+
+    return <Circle cx={cx} cy={cy} r={r} color={color} />;
+};
 
 // Generate initial random state for particles in 3D space
 const createInitialParticles = () => {
@@ -49,10 +72,8 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
     const unpleasantWaves = useImage(require("../assets/images/nieprzyjemne_fale.jpg"));
 
     // SHARED VALUES FOR RENDERING
-    // For a small count of 20 particles, standard arrays are very stable on iOS
-    // and correctly trigger Reanimated redraws when replaced with new references.
-    const positions = useSharedValue<any[]>([]);
-    const colors = useSharedValue<string[]>([]);
+    // Store particle render data: position, color, and radius
+    const particlesData = useSharedValue<ParticleRenderData[]>([]);
     const time = useSharedValue(0);
 
     useFrameCallback((frameInfo) => {
@@ -79,30 +100,34 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         const zSpeed = 0.1 + e * 1.5;
         const chaos = (1 - s) * 25;
 
-        // VALENCE COLOR INTERPOLATION (Cool Blue to Warm Yellow)
-        // Pleasant (v=0) -> Cool Light Blue: rgb(0, 191, 255)
-        // Neutral (v=0.5) -> Soft White: rgb(240, 248, 255)
-        // Unpleasant (v=1) -> Warm Sunny Yellow: rgb(255, 215, 0)
+        // VALENCE COLOR INTERPOLATION (Pastel Warm to Pastel Cool)
+        // Pleasant (v=0) -> Pastel Warm (Soft Peach/Coral): rgb(255, 200, 180)
+        // Neutral (v=0.5) -> Pastel Neutral (Soft Lavender): rgb(230, 210, 240)
+        // Unpleasant (v=1) -> Pastel Cool (Soft Sky Blue): rgb(180, 210, 235)
 
-        const cCool = { r: 0, g: 191, b: 255 };
-        const cNeut = { r: 240, g: 248, b: 255 };
-        const cWarm = { r: 255, g: 215, b: 0 };
+        const cWarm = { r: 255, g: 200, b: 180 };   // Soft Peach/Coral (Pleasant)
+        const cNeut = { r: 230, g: 210, b: 240 };   // Soft Lavender (Neutral)
+        const cCool = { r: 180, g: 210, b: 235 };   // Soft Sky Blue (Unpleasant)
 
         let r, g, b;
         if (v < 0.5) {
+            // Interpolate from Warm (v=0) to Neutral (v=0.5)
             const t = v * 2;
-            r = cCool.r + (cNeut.r - cCool.r) * t;
-            g = cCool.g + (cNeut.g - cCool.g) * t;
-            b = cCool.b + (cNeut.b - cCool.b) * t;
+            r = cWarm.r + (cNeut.r - cWarm.r) * t;
+            g = cWarm.g + (cNeut.g - cWarm.g) * t;
+            b = cWarm.b + (cNeut.b - cWarm.b) * t;
         } else {
+            // Interpolate from Neutral (v=0.5) to Cool (v=1)
             const t = (v - 0.5) * 2;
-            r = cNeut.r + (cWarm.r - cNeut.r) * t;
-            g = cNeut.g + (cWarm.g - cNeut.g) * t;
-            b = cNeut.b + (cWarm.b - cNeut.b) * t;
+            r = cNeut.r + (cCool.r - cNeut.r) * t;
+            g = cNeut.g + (cCool.g - cNeut.g) * t;
+            b = cNeut.b + (cCool.b - cNeut.b) * t;
         }
 
-        const nextPositions: any[] = [];
-        const nextColors: string[] = [];
+        // Base radius depends on intensity
+        const baseRadius = 3 + (i * 27);
+
+        const nextParticlesData: typeof particlesData.value = [];
 
         for (let idx = 0; idx < MAX_PARTICLES; idx++) {
             const p = initialParticles[idx];
@@ -131,7 +156,8 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
             const px = ((p.x + noiseX) * scale) + CX;
             const py = ((p.y + noiseY) * scale) + CY;
 
-            nextPositions.push({ x: px, y: py });
+            // Radius scales with depth
+            const radius = baseRadius * scale;
 
             // Alpha and Blink
             let alpha = 1.0;
@@ -142,16 +168,15 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
             const blink = 0.7 + 0.3 * Math.sin(time.value * 3 + p.phase);
             const finalAlpha = alpha * blink;
 
-            // Construct explicit rgba string for maximum iOS visibility
-            nextColors.push(`rgba(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)}, ${finalAlpha})`);
+            // Construct rgba color string
+            const color = `rgba(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)}, ${finalAlpha})`;
+
+            nextParticlesData.push({ x: px, y: py, color, radius });
         }
 
-        // Force redraw by providing new array references
-        positions.value = nextPositions;
-        colors.value = nextColors;
+        // Force redraw by providing new array reference
+        particlesData.value = nextParticlesData;
     });
-
-    const currentStrokeWidth = useDerivedValue(() => 6 + (intensity.value * 54));
 
     // Opacities for the three background states
     const warmOpacity = useDerivedValue(() => Math.max(0, Math.min(1, 1 - valence.value * 2)));
@@ -190,17 +215,10 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
                     />
                 )}
 
-                {/* Particle Points */}
-                <Points
-                    points={positions}
-                    mode="points"
-                    // @ts-ignore
-                    colors={colors}
-                    // @ts-ignore
-                    strokeWidth={currentStrokeWidth}
-                    style="stroke"
-                    strokeCap="round"
-                />
+                {/* Particle Circles */}
+                {Array.from({ length: MAX_PARTICLES }).map((_, idx) => (
+                    <ParticleCircle key={idx} index={idx} particlesData={particlesData} />
+                ))}
             </Canvas>
         </View>
     );
