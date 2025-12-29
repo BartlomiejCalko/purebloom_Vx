@@ -1,8 +1,9 @@
 import { useEmotionalState } from "@/context/EmotionalStateContext";
+import { getEmotionalInterpretation } from "@/utils/interpretationUtils";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
-import { useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { FadeIn, useSharedValue, withTiming } from "react-native-reanimated";
 import { EmotionalParticles } from "./EmotionalParticles";
 
 export const HomeEmotionalMirrorSection = () => {
@@ -30,28 +31,45 @@ export const HomeEmotionalMirrorSection = () => {
         router.push("/emotional-mirror");
     };
 
-    return (
-        <View className="w-full relative items-center justify-center flex-1 rounded-xl overflow-hidden bg-slate-900">
-            <Pressable
-                onPress={handlePress}
-                className="flex-1 w-full bg-slate-900"
-                style={{ overflow: 'visible' }}
-            >
-                <EmotionalParticles
-                    intensity={intensity}
-                    valence={valence}
-                    heaviness={heaviness}
-                    stability={stability}
-                    energy={energy}
-                    mode="passive"
-                />
-            </Pressable>
+    // Generate accurate interpretation based on current state
+    const interpretationText = getEmotionalInterpretation(state);
 
-            {/* Micro-invitation text */}
-            <View className="opacity-60 absolute" style={{ marginBottom: -100 }}>
-                <Text className="text-white/70 text-md font-light tracking-tighter text-center">
-                    Twoje emocje są widoczne
-                </Text>
+    return (
+        <View className="w-full flex-1 items-center justify-start space-y-6">
+            <View className="w-full h-[320px] relative items-center justify-center rounded-3xl overflow-hidden bg-slate-900 border border-slate-800/50 shadow-lg shadow-black/40">
+                <Pressable
+                    onPress={handlePress}
+                    className="flex-1 w-full bg-slate-900"
+                    style={{ overflow: 'visible' }}
+                >
+                    <EmotionalParticles
+                        intensity={intensity}
+                        valence={valence}
+                        heaviness={heaviness}
+                        stability={stability}
+                        energy={energy}
+                        mode="passive"
+                    />
+                </Pressable>
+
+                {/* Micro-interaction hint overlay - subtle */}
+                <View className="absolute bottom-4 opacity-40 pointer-events-none">
+                    <Text className="text-white/50 text-xs font-light tracking-widest uppercase">
+                        Dotknij, aby zmienić
+                    </Text>
+                </View>
+            </View>
+
+            {/* Emotional Interpretation Text */}
+            <View className="px-4 w-full items-center">
+                <Animated.View
+                    entering={FadeIn.duration(1000)}
+                    key={interpretationText} // Re-animate when text changes
+                >
+                    <Text className="text-white/80 text-lg font-light text-center leading-relaxed font-[System]">
+                        {interpretationText}
+                    </Text>
+                </Animated.View>
             </View>
         </View>
     );
