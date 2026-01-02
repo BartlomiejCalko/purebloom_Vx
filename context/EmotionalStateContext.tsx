@@ -29,9 +29,9 @@ export const EmotionalStateProvider: React.FC<{ children: React.ReactNode }> = (
     const [state, setState] = useState<EmotionalState>({
         intensity: 0.5,
         valence: 0.5,
-        heaviness: 0.45,
-        chaos: 0.3,     // 0=stable, 1=chaotic - default slightly stable
-        energy: 0.01,   // 👈 ZMIEŃ TĘ WARTOŚĆ (0.0 - 1.0) aby kontrolować początkową prędkość particles
+        heaviness: 0.5,   // 0.5 = no vertical movement (centered)
+        chaos: 0.3,       // 0=stable, 1=chaotic
+        energy: 0.3,      // Początkowa prędkość particles
         lastUpdated: new Date(),
     });
 

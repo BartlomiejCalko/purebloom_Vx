@@ -67,25 +67,25 @@ export default function EmotionalMirrorScreen() {
 
                         <EmotionalSlider
                             label="Jakie są te odczucia w odbiorze?"
-                            leftLabel="Nieprzyjemne"
+                            leftLabel="Raczej nieprzyjemne"
                             middleLabel="Neutralne"
-                            rightLabel="Przyjemne"
+                            rightLabel="Raczej przyjemne"
                             value={valence}
                         />
 
                         <EmotionalSlider
                             label="Jak to, co teraz czujesz, wpływa na Twoje ciało i energię?"
-                            leftLabel="Lekko, unosi"
-                            middleLabel="Zrównoważone"
-                            rightLabel="Ciężko, ciągnie"
+                            leftLabel="Unosi ku górze"
+                            middleLabel="Jest neutralne"
+                            rightLabel="Ciąży w dół"
                             value={heaviness}
                         />
 
                         <EmotionalSlider
-                            label="Na ile to, co teraz czujesz, przypomina że panujesz nad tym, co się w Tobie dzieje?"
-                            leftLabel="Spokojnie"
-                            middleLabel="Zmiennie"
-                            rightLabel="Chaotycznie"
+                            label="Na ile to, co teraz czujesz, przypomina spokój, a na ile chaos?"
+                            leftLabel="Bardziej spokój"
+                            middleLabel="Jest nutralnie"
+                            rightLabel="Bardziej chaos"
                             value={chaos}
                         />
 

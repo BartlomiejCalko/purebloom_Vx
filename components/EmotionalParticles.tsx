@@ -160,18 +160,20 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         const c = chaos.value;   // 0 (Stable) to 1 (Chaotic)
         const e = energy.value;
 
-        // Gravity: h=0 (Lightness) → float up, h=1 (Heaviness) → fall down
-        const gravity = (h - 0.35) * 800;
+        // Gravity: centered at 0.5 (no vertical movement)
+        // h=0 (left "Lekko, unosi") → strong UP
+        // h=0.5 (middle) → NO vertical movement
+        // h=1 (right "Ciężko, ciągnie") → strong DOWN
+        const gravity = (h - 0.5) * 600;
         
-        // Chaos: c=0 (Stable) → low chaos, c=1 (Chaotic) → high chaos
-        // Chaos affects irregularity and dampens BASE speed, but NOT energy
-        const chaosAmount = c * 50;
-        const chaosDampening = 1 - (c * 0.5); // Base speed reduced at high chaos
+        // === ENERGY: Controls ONLY speed ===
+        // e=0 (left) → slow, e=1 (right) → fast
+        const speedMultiplier = 0.2 + e * 1.2; // Range: 0.2 to 1.4
+        const zSpeed = 0.1 + e * 0.9;          // Z depth speed: 0.1 to 1.0
         
-        // Z Speed: base is dampened by chaos, energy adds independently
-        const baseZSpeed = 0.1 * chaosDampening;
-        const energyZSpeed = e * 0.8; // Energy always has full effect
-        const zSpeed = baseZSpeed + energyZSpeed;
+        // === CHAOS: Controls ONLY irregularity (NOT speed) ===
+        // c=0 (left) → smooth/stable, c=1 (right) → erratic/irregular
+        const chaosAmount = c * 50; // Noise amplitude for position jitter
 
         // VALENCE COLOR INTERPOLATION (Cool to Warm for particles)
         // v=0 (Unpleasant/LEFT) → Cool (Light Sky Blue)
@@ -209,45 +211,43 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         for (let idx = 0; idx < activeCount; idx++) {
             const p = initialParticles[idx];
 
-            // 1. Z Movement with chaos variation (irregular depth changes)
-            // Dampening is already applied to base zSpeed, energy works independently
-            const zChaosVariation = 1 + (Math.sin(time.value * 3 + p.phase) * c * 0.3);
-            p.z -= zSpeed * dt * p.baseSpeed * zChaosVariation;
+            // 1. Z Movement - speed controlled by ENERGY only
+            // Chaos adds slight variation to timing (not speed)
+            const zTimingVariation = 1 + (Math.sin(time.value * 2 + p.phase) * c * 0.2);
+            p.z -= zSpeed * dt * p.baseSpeed * zTimingVariation;
             if (p.z <= 0.1) {
                 p.z = 3.0;
                 p.x = (Math.random() - 0.5) * W * 2;
                 p.y = (Math.random() - 0.5) * H * 2;
             }
 
-            // 2. Y Movement with chaotic direction changes (irregular, not faster)
-            // Base speed dampened by chaos, energy adds independently
-            const baseSpeedMultiplier = 0.4 * chaosDampening;
-            const energyBoost = e * 1.0; // Energy always has full effect
-            const energyMultiplier = baseSpeedMultiplier + energyBoost;
-            // Add irregular direction changes when chaotic (slow oscillations)
-            const chaosDirectionFlip = c > 0.4 ? Math.sin(time.value * 2 + p.noiseOffsetY) * c * 0.6 : 0;
-            p.y += gravity * dt * energyMultiplier * (1 + chaosDirectionFlip);
+            // 2. Y Movement - speed controlled by ENERGY, direction by CHAOS
+            // Energy controls how fast particles fall/rise
+            p.y += gravity * dt * speedMultiplier;
             
-            // Irregular X drift when chaotic (slow, wandering movement)
-            const chaosDriftX = Math.sin(time.value * 1.5 + p.noiseOffsetX) * c * 60 * dt;
-            p.x += chaosDriftX;
+            // Chaos adds irregular direction wobble (doesn't change speed)
+            const chaosWobbleY = Math.sin(time.value * 2 + p.noiseOffsetY) * c * 0.5;
+            p.y += chaosWobbleY;
+            
+            // Chaos adds irregular X drift (wandering, not speeding)
+            const chaosWobbleX = Math.sin(time.value * 1.5 + p.noiseOffsetX) * c * 40 * dt;
+            p.x += chaosWobbleX;
 
             if (p.y > H) p.y = -H;
             if (p.y < -H) p.y = H;
 
-            // 3. Noise and Chaos - irregular but SLOW movement
-            // Base oscillation (slow, flowing)
-            const baseNoiseX = Math.sin(time.value * 1.2 + p.phase + p.noiseOffsetX);
-            const baseNoiseY = Math.cos(time.value * 1.2 + p.phase + p.noiseOffsetY);
+            // 3. Position noise - CHAOS controls irregularity only (not speed)
+            // Base smooth oscillation
+            const baseNoiseX = Math.sin(time.value * 1.0 + p.phase + p.noiseOffsetX);
+            const baseNoiseY = Math.cos(time.value * 1.0 + p.phase + p.noiseOffsetY);
             
-            // Additional chaotic layers - slow frequencies for dreamlike irregularity
-            const chaosFactor = c; // 0 = stable, 1 = chaotic
-            const irregularOscillation = Math.sin(time.value * 2.5 + p.phase * 3) * chaosFactor;
-            const erraticJitter = Math.sin(time.value * 4 + p.noiseOffsetX * 2) * chaosFactor * 0.4;
+            // Chaos adds irregular patterns (erratic path, not faster)
+            const irregularPattern = Math.sin(time.value * 2 + p.phase * 3) * c;
+            const erraticJitter = Math.sin(time.value * 3 + p.noiseOffsetX * 2) * c * 0.3;
             
-            // Combined noise - irregular pattern, calm tempo
-            const noiseX = (baseNoiseX + irregularOscillation + erraticJitter) * chaosAmount;
-            const noiseY = (baseNoiseY + irregularOscillation * 0.7 - erraticJitter) * chaosAmount;
+            // Combined noise - chaos increases amplitude of irregularity
+            const noiseX = (baseNoiseX + irregularPattern + erraticJitter) * chaosAmount;
+            const noiseY = (baseNoiseY + irregularPattern * 0.7 - erraticJitter) * chaosAmount;
 
             // Project
             const scale = 1.0 / p.z;
