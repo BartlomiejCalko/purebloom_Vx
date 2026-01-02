@@ -95,20 +95,20 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
     // Gradient colors state - interpolated based on valence
     const [gradientColors, setGradientColors] = useState<string[]>([]);
 
-    // Warm pastel colors (Pleasant - valence = 0)
-    // Rich but soft peach, coral, warm pink palette - saturated but not garish
-    const warmColors = useMemo(() => [
-        "#F0A880", "#E88090", "#F0C080",  // Top row: rich peach, soft coral, golden cream
-        "#E08898", "#E078A8", "#E0A878",  // Middle row: rose pink, orchid, warm amber
-        "#D89060", "#E07058", "#D06088",  // Bottom row: burnt sienna, terracotta, raspberry
-    ], []);
-
-    // Cool pastel colors (Unpleasant - valence = 1)
-    // Rich but soft lavender, mint, sky blue palette - saturated but not garish
+    // Cool pastel colors (Unpleasant - valence = 0, LEFT side)
+    // Rich but soft lavender, mint, sky blue palette
     const coolColors = useMemo(() => [
         "#78C8A0", "#68A8C8", "#A888C8",  // Top row: rich mint, ocean blue, rich lavender
         "#58A8C8", "#8088C8", "#68B8A8",  // Middle row: teal blue, periwinkle, seafoam
         "#9878B8", "#68B0E0", "#88C888",  // Bottom row: amethyst, sky blue, spring green
+    ], []);
+
+    // Warm pastel colors (Pleasant - valence = 1, RIGHT side)
+    // Rich but soft peach, coral, warm pink palette
+    const warmColors = useMemo(() => [
+        "#F0A880", "#E88090", "#F0C080",  // Top row: rich peach, soft coral, golden cream
+        "#E08898", "#E078A8", "#E0A878",  // Middle row: rose pink, orchid, warm amber
+        "#D89060", "#E07058", "#D06088",  // Bottom row: burnt sienna, terracotta, raspberry
     ], []);
 
     // Mesh grid points (3x3)
@@ -119,14 +119,14 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
     ], []);
 
     // Update gradient colors when valence changes
-    // valence = 0 (Pleasant) → Warm colors
-    // valence = 1 (Unpleasant) → Cool colors
+    // valence = 0 (Unpleasant/LEFT) → Cool colors
+    // valence = 1 (Pleasant/RIGHT) → Warm colors
     useEffect(() => {
         const updateColors = () => {
             const v = valence.value;
-            const interpolatedColors = warmColors.map((warmColor, idx) => {
-                const coolColor = coolColors[idx];
-                return interpolateColor(warmColor, coolColor, v);
+            const interpolatedColors = coolColors.map((coolColor, idx) => {
+                const warmColor = warmColors[idx];
+                return interpolateColor(coolColor, warmColor, v);
             });
             setGradientColors(interpolatedColors);
         };
@@ -162,38 +162,39 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
 
         // Gravity: h=0 (Lightness) → float up, h=1 (Heaviness) → fall down
         const gravity = (h - 0.35) * 800;
-        // Energy affects Z speed: reduced from 1.5 to 0.8 for subtler effect
-        const zSpeed = 0.1 + e * 0.8;
         
         // Chaos: c=0 (Stable) → low chaos, c=1 (Chaotic) → high chaos
-        // Only affects movement irregularity, not speed
-        // Higher chaos = more irregular but SLOWER movement
+        // Chaos affects irregularity and dampens BASE speed, but NOT energy
         const chaosAmount = c * 50;
-        const chaosDampening = 1 - (c * 0.6); // At c=1, speed reduced to 40%
+        const chaosDampening = 1 - (c * 0.5); // Base speed reduced at high chaos
+        
+        // Z Speed: base is dampened by chaos, energy adds independently
+        const baseZSpeed = 0.1 * chaosDampening;
+        const energyZSpeed = e * 0.8; // Energy always has full effect
+        const zSpeed = baseZSpeed + energyZSpeed;
 
-        // VALENCE COLOR INTERPOLATION (Bright Warm to Bright Cool)
-        // Brighter, more saturated colors for better visibility against muted gradient
-        // Pleasant (v=0) -> Bright Warm (Peach/Coral): rgb(255, 220, 200)
-        // Neutral (v=0.5) -> Bright Neutral (Light Lavender): rgb(245, 230, 255)
-        // Unpleasant (v=1) -> Bright Cool (Light Sky Blue): rgb(200, 235, 255)
+        // VALENCE COLOR INTERPOLATION (Cool to Warm for particles)
+        // v=0 (Unpleasant/LEFT) → Cool (Light Sky Blue)
+        // v=0.5 (Neutral) → Light Lavender
+        // v=1 (Pleasant/RIGHT) → Warm (Peach/Coral)
 
-        const cWarm = { r: 255, g: 220, b: 200 };   // Bright Peach/Coral (Pleasant)
-        const cNeut = { r: 245, g: 230, b: 255 };   // Light Lavender (Neutral)
         const cCool = { r: 200, g: 235, b: 255 };   // Light Sky Blue (Unpleasant)
+        const cNeut = { r: 245, g: 230, b: 255 };   // Light Lavender (Neutral)
+        const cWarm = { r: 255, g: 220, b: 200 };   // Bright Peach/Coral (Pleasant)
 
         let r, g, b;
         if (v < 0.5) {
-            // Interpolate from Warm (v=0) to Neutral (v=0.5)
+            // Interpolate from Cool (v=0) to Neutral (v=0.5)
             const t = v * 2;
-            r = cWarm.r + (cNeut.r - cWarm.r) * t;
-            g = cWarm.g + (cNeut.g - cWarm.g) * t;
-            b = cWarm.b + (cNeut.b - cWarm.b) * t;
+            r = cCool.r + (cNeut.r - cCool.r) * t;
+            g = cCool.g + (cNeut.g - cCool.g) * t;
+            b = cCool.b + (cNeut.b - cCool.b) * t;
         } else {
-            // Interpolate from Neutral (v=0.5) to Cool (v=1)
+            // Interpolate from Neutral (v=0.5) to Warm (v=1)
             const t = (v - 0.5) * 2;
-            r = cNeut.r + (cCool.r - cNeut.r) * t;
-            g = cNeut.g + (cCool.g - cNeut.g) * t;
-            b = cNeut.b + (cCool.b - cNeut.b) * t;
+            r = cNeut.r + (cWarm.r - cNeut.r) * t;
+            g = cNeut.g + (cWarm.g - cNeut.g) * t;
+            b = cNeut.b + (cWarm.b - cNeut.b) * t;
         }
 
         // Base radius depends on intensity
@@ -208,10 +209,10 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         for (let idx = 0; idx < activeCount; idx++) {
             const p = initialParticles[idx];
 
-            // 1. Z Movement with chaos variation (irregular depth changes, not faster)
-            // Apply dampening so chaotic particles move slower
+            // 1. Z Movement with chaos variation (irregular depth changes)
+            // Dampening is already applied to base zSpeed, energy works independently
             const zChaosVariation = 1 + (Math.sin(time.value * 3 + p.phase) * c * 0.3);
-            p.z -= zSpeed * dt * p.baseSpeed * zChaosVariation * chaosDampening;
+            p.z -= zSpeed * dt * p.baseSpeed * zChaosVariation;
             if (p.z <= 0.1) {
                 p.z = 3.0;
                 p.x = (Math.random() - 0.5) * W * 2;
@@ -219,8 +220,10 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
             }
 
             // 2. Y Movement with chaotic direction changes (irregular, not faster)
-            // Energy multiplier controls speed, chaos dampens it
-            const energyMultiplier = (0.4 + e * 1.0) * chaosDampening;
+            // Base speed dampened by chaos, energy adds independently
+            const baseSpeedMultiplier = 0.4 * chaosDampening;
+            const energyBoost = e * 1.0; // Energy always has full effect
+            const energyMultiplier = baseSpeedMultiplier + energyBoost;
             // Add irregular direction changes when chaotic (slow oscillations)
             const chaosDirectionFlip = c > 0.4 ? Math.sin(time.value * 2 + p.noiseOffsetY) * c * 0.6 : 0;
             p.y += gravity * dt * energyMultiplier * (1 + chaosDirectionFlip);

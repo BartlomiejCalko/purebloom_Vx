@@ -58,7 +58,7 @@ export default function EmotionalMirrorScreen() {
                         </Text>
 
                         <EmotionalSlider
-                            label="Jak mocno odczuwasz to, co dzieje się w Twoim ciele i umyśle?"
+                            label="Jak mocno odczuwasz teraz to, co dzieje się w Twoim ciele i umyśle?"
                             leftLabel="Nieznacznie"
                             middleLabel="Umiarkowanie"
                             rightLabel="Intensywnie"
@@ -74,7 +74,7 @@ export default function EmotionalMirrorScreen() {
                         />
 
                         <EmotionalSlider
-                            label="Jak to co teraz czujesz wpływa na Twoje ciało i energię?"
+                            label="Jak to, co teraz czujesz, wpływa na Twoje ciało i energię?"
                             leftLabel="Lekko, unosi"
                             middleLabel="Zrównoważone"
                             rightLabel="Ciężko, ciągnie"
@@ -82,7 +82,7 @@ export default function EmotionalMirrorScreen() {
                         />
 
                         <EmotionalSlider
-                            label="Na ile masz teraz poczucie, że panujesz nad tym, co się w Tobie dzieje?"
+                            label="Na ile to, co teraz czujesz, przypomina że panujesz nad tym, co się w Tobie dzieje?"
                             leftLabel="Spokojnie"
                             middleLabel="Zmiennie"
                             rightLabel="Chaotycznie"
