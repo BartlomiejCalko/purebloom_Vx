@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState } from "react";
 
 interface EmotionalState {
     intensity: number;  // 0-1 (Low -> High)
-    valence: number;    // 0-1 (Pleasant -> Unpleasant)
+    valence: number;    // 0-1 (Unpleasant -> Pleasant)
     heaviness: number;  // 0-1 (Light -> Heavy)
-    stability: number;  // 0-1 (Stable -> Chaotic)
+    chaos: number;      // 0-1 (Stable -> Chaotic)
     energy: number;     // 0-1 (Low -> High)
     lastUpdated: Date;
 }
@@ -25,13 +25,13 @@ export const useEmotionalState = () => {
 };
 
 export const EmotionalStateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Default calm, stable state for initial app experience
+    // Default neutral state
     const [state, setState] = useState<EmotionalState>({
-        intensity: 0.4,      // Medium-low intensity
-        valence: 0.3,        // Slightly pleasant (warm gradient)
-        heaviness: 0.4,      // Slightly light (gentle upward drift)
-        stability: 0.1,      // Very stable (minimal chaos)
-        energy: 0.15,        // Low energy (slow, calm movement)
+        intensity: 0.5,
+        valence: 0.5,
+        heaviness: 0.45,
+        chaos: 0.3,     // 0=stable, 1=chaotic - default slightly stable
+        energy: 0.01,   // 👈 ZMIEŃ TĘ WARTOŚĆ (0.0 - 1.0) aby kontrolować początkową prędkość particles
         lastUpdated: new Date(),
     });
 

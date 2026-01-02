@@ -2,12 +2,12 @@ export interface EmotionalState {
     intensity: number;
     valence: number;
     heaviness: number;
-    stability: number;
+    chaos: number;  // 0 = Stable, 1 = Chaotic
     energy: number;
 }
 
 export const getEmotionalInterpretation = (state: EmotionalState): string => {
-    const { valence, energy, intensity, stability, heaviness } = state;
+    const { valence, energy, intensity, chaos, heaviness } = state;
 
     // Helper thresholds
     const isPleasant = valence > 0.5;
@@ -17,8 +17,8 @@ export const getEmotionalInterpretation = (state: EmotionalState): string => {
     // Nuance helpers
     const isHeavy = heaviness > 0.6;
     const isLight = heaviness < 0.4;
-    const isStable = stability < 0.4; // 0 = Stable, 1 = Chaotic
-    const isChaotic = stability > 0.6;
+    const isStable = chaos < 0.4;  // low chaos = stable
+    const isChaotic = chaos > 0.6; // high chaos = chaotic
     const isIntense = intensity > 0.7;
     const isMild = intensity < 0.3;
 

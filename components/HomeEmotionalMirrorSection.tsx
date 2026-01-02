@@ -15,7 +15,7 @@ export const HomeEmotionalMirrorSection = () => {
     const intensity = useSharedValue(state.intensity);
     const valence = useSharedValue(state.valence);
     const heaviness = useSharedValue(state.heaviness);
-    const stability = useSharedValue(state.stability);
+    const chaos = useSharedValue(state.chaos);
     const energy = useSharedValue(state.energy);
 
     // Sync shared values when global state updates (e.g. returning from Mirror)
@@ -23,7 +23,7 @@ export const HomeEmotionalMirrorSection = () => {
         intensity.value = withTiming(state.intensity, { duration: 1500 });
         valence.value = withTiming(state.valence, { duration: 1500 });
         heaviness.value = withTiming(state.heaviness, { duration: 1500 });
-        stability.value = withTiming(state.stability, { duration: 1500 });
+        chaos.value = withTiming(state.chaos, { duration: 1500 });
         energy.value = withTiming(state.energy, { duration: 1500 });
     }, [state]);
 
@@ -46,7 +46,7 @@ export const HomeEmotionalMirrorSection = () => {
                         intensity={intensity}
                         valence={valence}
                         heaviness={heaviness}
-                        stability={stability}
+                        chaos={chaos}
                         energy={energy}
                         mode="passive"
                     />

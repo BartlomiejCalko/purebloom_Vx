@@ -8,7 +8,7 @@ interface EmotionalParticlesProps {
     intensity: SharedValue<number>;
     valence: SharedValue<number>;
     heaviness: SharedValue<number>;
-    stability: SharedValue<number>;
+    chaos: SharedValue<number>;
     energy: SharedValue<number>;
     mode?: "passive" | "interactive";
 }
@@ -85,7 +85,7 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
     intensity,
     valence,
     heaviness,
-    stability,
+    chaos,
     energy,
     mode = "interactive",
 }) => {
@@ -157,7 +157,7 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         const i = intensity.value;
         const v = valence.value; // 0 (Pleasant) to 1 (Unpleasant)
         const h = heaviness.value;
-        const s = stability.value;
+        const c = chaos.value;   // 0 (Stable) to 1 (Chaotic)
         const e = energy.value;
 
         // Gravity: h=0 (Lightness) → float up, h=1 (Heaviness) → fall down
@@ -165,9 +165,11 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         // Energy affects Z speed: reduced from 1.5 to 0.8 for subtler effect
         const zSpeed = 0.1 + e * 0.8;
         
-        // Chaos: s=0 (Stable) → low chaos, s=1 (Chaotic) → high chaos
-        // Significantly increased range for dramatic effect
-        const chaos = s * 60;
+        // Chaos: c=0 (Stable) → low chaos, c=1 (Chaotic) → high chaos
+        // Only affects movement irregularity, not speed
+        // Higher chaos = more irregular but SLOWER movement
+        const chaosAmount = c * 50;
+        const chaosDampening = 1 - (c * 0.6); // At c=1, speed reduced to 40%
 
         // VALENCE COLOR INTERPOLATION (Bright Warm to Bright Cool)
         // Brighter, more saturated colors for better visibility against muted gradient
@@ -206,42 +208,43 @@ export const EmotionalParticles: React.FC<EmotionalParticlesProps> = ({
         for (let idx = 0; idx < activeCount; idx++) {
             const p = initialParticles[idx];
 
-            // 1. Z Movement with chaos variation
-            const zChaosVariation = 1 + (Math.sin(time.value * 5 + p.phase) * s * 0.5);
-            p.z -= zSpeed * dt * p.baseSpeed * zChaosVariation;
+            // 1. Z Movement with chaos variation (irregular depth changes, not faster)
+            // Apply dampening so chaotic particles move slower
+            const zChaosVariation = 1 + (Math.sin(time.value * 3 + p.phase) * c * 0.3);
+            p.z -= zSpeed * dt * p.baseSpeed * zChaosVariation * chaosDampening;
             if (p.z <= 0.1) {
                 p.z = 3.0;
                 p.x = (Math.random() - 0.5) * W * 2;
                 p.y = (Math.random() - 0.5) * H * 2;
             }
 
-            // 2. Y Movement with chaotic direction changes
-            // Energy multiplier: reduced from 1.7 to 1.0 for subtler effect
-            const energyMultiplier = 0.4 + e * 1.0;
-            // Add sudden direction changes when chaotic
-            const chaosDirectionFlip = s > 0.5 ? Math.sin(time.value * 4 + p.noiseOffsetY) * s * 0.8 : 0;
+            // 2. Y Movement with chaotic direction changes (irregular, not faster)
+            // Energy multiplier controls speed, chaos dampens it
+            const energyMultiplier = (0.4 + e * 1.0) * chaosDampening;
+            // Add irregular direction changes when chaotic (slow oscillations)
+            const chaosDirectionFlip = c > 0.4 ? Math.sin(time.value * 2 + p.noiseOffsetY) * c * 0.6 : 0;
             p.y += gravity * dt * energyMultiplier * (1 + chaosDirectionFlip);
             
-            // Random X drift when chaotic
-            const chaosDriftX = Math.sin(time.value * 3 + p.noiseOffsetX) * s * 150 * dt;
+            // Irregular X drift when chaotic (slow, wandering movement)
+            const chaosDriftX = Math.sin(time.value * 1.5 + p.noiseOffsetX) * c * 60 * dt;
             p.x += chaosDriftX;
 
             if (p.y > H) p.y = -H;
             if (p.y < -H) p.y = H;
 
-            // 3. Noise and Chaos
-            // Base oscillation
-            const baseNoiseX = Math.sin(time.value * 2 + p.phase + p.noiseOffsetX);
-            const baseNoiseY = Math.cos(time.value * 2 + p.phase + p.noiseOffsetY);
+            // 3. Noise and Chaos - irregular but SLOW movement
+            // Base oscillation (slow, flowing)
+            const baseNoiseX = Math.sin(time.value * 1.2 + p.phase + p.noiseOffsetX);
+            const baseNoiseY = Math.cos(time.value * 1.2 + p.phase + p.noiseOffsetY);
             
-            // Additional chaotic layers when stability is low
-            const chaosFactor = s; // 0 = stable, 1 = chaotic
-            const fastOscillation = Math.sin(time.value * 8 + p.phase * 3) * chaosFactor;
-            const erraticJitter = Math.sin(time.value * 15 + p.noiseOffsetX * 2) * chaosFactor * 0.5;
+            // Additional chaotic layers - slow frequencies for dreamlike irregularity
+            const chaosFactor = c; // 0 = stable, 1 = chaotic
+            const irregularOscillation = Math.sin(time.value * 2.5 + p.phase * 3) * chaosFactor;
+            const erraticJitter = Math.sin(time.value * 4 + p.noiseOffsetX * 2) * chaosFactor * 0.4;
             
-            // Combined noise with multiple frequencies for more organic chaos
-            const noiseX = (baseNoiseX + fastOscillation + erraticJitter) * chaos * energyMultiplier;
-            const noiseY = (baseNoiseY + fastOscillation * 0.8 - erraticJitter) * chaos * energyMultiplier;
+            // Combined noise - irregular pattern, calm tempo
+            const noiseX = (baseNoiseX + irregularOscillation + erraticJitter) * chaosAmount;
+            const noiseY = (baseNoiseY + irregularOscillation * 0.7 - erraticJitter) * chaosAmount;
 
             // Project
             const scale = 1.0 / p.z;

@@ -53,19 +53,19 @@ function getRecommendedExercises(state: {
     intensity: number;
     valence: number;
     heaviness: number;
-    stability: number;
+    chaos: number;  // 0 = Stable, 1 = Chaotic
     energy: number;
 }): Exercise[] {
-    const { intensity, valence, heaviness, stability, energy } = state;
+    const { intensity, valence, heaviness, chaos, energy } = state;
 
     // Emotional profile flags
     const isHighIntensity = intensity > 0.6;
     const isLowEnergy = energy < 0.4;
     const isUnpleasant = valence < 0.4;
-    const isChaotic = stability < 0.4;
-    const isHeavy = heaviness < 0.4; // 0=heavy, 1=light
+    const isChaotic = chaos > 0.6;  // high chaos = chaotic
+    const isHeavy = heaviness > 0.6; // high heaviness = heavy
     const isPleasant = valence > 0.6;
-    const isCalm = intensity < 0.4 && stability > 0.6;
+    const isCalm = intensity < 0.4 && chaos < 0.4; // low chaos = stable/calm
 
     const recommendations: string[] = [];
 

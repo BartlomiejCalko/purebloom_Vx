@@ -11,6 +11,7 @@ import Animated, {
 interface EmotionalSliderProps {
     label: string;
     leftLabel?: string;
+    middleLabel?: string;
     rightLabel?: string;
     value: SharedValue<number>; // 0 to 1
     onChange?: (val: number) => void;
@@ -20,6 +21,7 @@ interface EmotionalSliderProps {
 export const EmotionalSlider: React.FC<EmotionalSliderProps> = ({
     label,
     leftLabel,
+    middleLabel,
     rightLabel,
     value,
     onChange,
@@ -64,7 +66,7 @@ export const EmotionalSlider: React.FC<EmotionalSliderProps> = ({
     });
 
     return (
-        <View className="w-full my-4">
+        <View className="w-full my-4 bg-indigo-500/10 rounded-lg p-4">
             <Text className="text-white/80 text-lg font-light mb-4 ml-1">{label}</Text>
 
             <GestureDetector gesture={pan}>
@@ -89,8 +91,11 @@ export const EmotionalSlider: React.FC<EmotionalSliderProps> = ({
             </GestureDetector>
 
             <View className="flex-row justify-between mt-1 px-1">
-                <Text className="text-white/40 text-xs">{leftLabel}</Text>
-                <Text className="text-white/40 text-xs">{rightLabel}</Text>
+                <Text className="text-white/40 text-xs flex-1 text-left">{leftLabel}</Text>
+                {middleLabel && (
+                    <Text className="text-white/40 text-xs flex-1 text-center">{middleLabel}</Text>
+                )}
+                <Text className="text-white/40 text-xs flex-1 text-right">{rightLabel}</Text>
             </View>
         </View>
     );

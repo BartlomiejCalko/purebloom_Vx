@@ -15,7 +15,7 @@ export default function EmotionalMirrorScreen() {
     const intensity = useSharedValue(state.intensity);
     const valence = useSharedValue(state.valence);
     const heaviness = useSharedValue(state.heaviness);
-    const stability = useSharedValue(state.stability);
+    const chaos = useSharedValue(state.chaos);
     const energy = useSharedValue(state.energy);
 
     const handleSaveAndExit = () => {
@@ -23,7 +23,7 @@ export default function EmotionalMirrorScreen() {
             intensity: intensity.value,
             valence: valence.value,
             heaviness: heaviness.value,
-            stability: stability.value,
+            chaos: chaos.value,
             energy: energy.value,
         });
         router.back();
@@ -38,7 +38,7 @@ export default function EmotionalMirrorScreen() {
                     intensity={intensity}
                     valence={valence}
                     heaviness={heaviness}
-                    stability={stability}
+                    chaos={chaos}
                     energy={energy}
                     mode="interactive"
                 />
@@ -58,37 +58,42 @@ export default function EmotionalMirrorScreen() {
                         </Text>
 
                         <EmotionalSlider
-                            label="Jak intensywne jest to, co czujesz?"
-                            leftLabel="Słabe"
-                            rightLabel="Intensywne"
+                            label="Jak mocno odczuwasz to, co dzieje się w Twoim ciele i umyśle?"
+                            leftLabel="Nieznacznie"
+                            middleLabel="Umiarkowanie"
+                            rightLabel="Intensywnie"
                             value={intensity}
                         />
 
                         <EmotionalSlider
-                            label="Czy to co czujesz jest przyjemne czy nieprzyjemne?"
-                            leftLabel="Przyjemne"
-                            rightLabel="Nieprzyjemne"
+                            label="Jakie są te odczucia w odbiorze?"
+                            leftLabel="Nieprzyjemne"
+                            middleLabel="Neutralne"
+                            rightLabel="Przyjemne"
                             value={valence}
                         />
 
                         <EmotionalSlider
-                            label="Czy to, co czujesz daje Ci poczucie ciężaru czy lekkości?"
-                            leftLabel="Lekkość"
-                            rightLabel="Ciężar"
+                            label="Jak to co teraz czujesz wpływa na Twoje ciało i energię?"
+                            leftLabel="Lekko, unosi"
+                            middleLabel="Zrównoważone"
+                            rightLabel="Ciężko, ciągnie"
                             value={heaviness}
                         />
 
                         <EmotionalSlider
-                            label="Jak określisz swój stan wewnętrzny?"
-                            leftLabel="Stabilny"
-                            rightLabel="Chaotyczny"
-                            value={stability}
+                            label="Na ile masz teraz poczucie, że panujesz nad tym, co się w Tobie dzieje?"
+                            leftLabel="Spokojnie"
+                            middleLabel="Zmiennie"
+                            rightLabel="Chaotycznie"
+                            value={chaos}
                         />
 
                         <EmotionalSlider
-                            label="Jak określisz poziom Twojej energii?"
-                            leftLabel="Niski"
-                            rightLabel="Wysoki"
+                            label="Na ile Twoje ciało i umysł odczuwają teraz gotowość do działania?"
+                            leftLabel="Wyczerpanie"
+                            middleLabel="Umiarkowana"
+                            rightLabel="Wysoka energia"
                             value={energy}
                         />
 
